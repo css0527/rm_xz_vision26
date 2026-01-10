@@ -24,7 +24,7 @@ namespace ecu
     {
       auto gain = tools::read<double>(yaml, "gain");
       auto vid_pid = tools::read<std::string>(yaml, "vid_pid");
-      camera_ = std::make_unique<HikRobot>(exposure_ms, gain, vid_pid);
+      camera_ = std::make_unique<io::HikRobot>(exposure_ms, gain, vid_pid);
     }
 
     else

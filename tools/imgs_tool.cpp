@@ -1,4 +1,3 @@
-#pragma once
 #include "imgs_tool.hpp"
 #include <opencv2/opencv.hpp>
 

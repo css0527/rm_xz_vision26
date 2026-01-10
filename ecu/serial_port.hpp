@@ -36,11 +36,11 @@ namespace ecu
     double ft_angle; // flight time angle
 
     explicit SerialPort(const std::string& config_path);
-    ~SerialBoard();
+    ~SerialPort();
 
     Eigen::Quaterniond imu_at(std::chrono::steady_clock::time_point timestamp);
 
-    void send(io::Command command) const;
+    void send(Command command) const;
 
   private:
     tools::ThreadSafeQueue<IMUData> queue_;

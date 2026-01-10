@@ -1,0 +1,2 @@
+/usr/bin/ar qc libecu.a CMakeFiles/ecu.dir/camera.cpp.o CMakeFiles/ecu.dir/serial_port.cpp.o CMakeFiles/ecu.dir/hikrobot/hikrobot.cpp.o
+/usr/bin/ranlib libecu.a

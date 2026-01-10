@@ -13,7 +13,7 @@
 
 namespace io
 {
-  class HikRobot : public CameraBase
+  class HikRobot : public ecu::CameraBase
   {
   public:
     HikRobot(double exposure_ms, double gain, const std::string& vid_pid);

@@ -1,0 +1,25 @@
+[2026-01-10 17:11:06.218] [warning] Invalid vid_pid: "MV-CS016-10UC"
+[2026-01-10 17:11:06.219] [debug] -----BuffDetection环境配置中-----
+[2026-01-10 17:11:06.219] [info] HikRobot's daemon thread started.
+[2026-01-10 17:11:07.434] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:07.536] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:07.536] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:07.830] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:07.932] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:07.932] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:08.225] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:08.327] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:08.327] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:08.621] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:08.723] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:08.723] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:09.016] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:09.118] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:09.118] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:09.412] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:09.513] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:09.513] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:09.807] [info] HikRobot's capture thread started.
+[2026-01-10 17:11:09.908] [warning] MV_CC_GetImageBuffer failed: 0x80000007
+[2026-01-10 17:11:09.908] [info] HikRobot's capture thread stopped.
+[2026-01-10 17:11:10.202] [info] HikRobot's capture thread started.
