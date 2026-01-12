@@ -4,10 +4,13 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
+#include <yaml-cpp/yaml.h>
+#include <fmt/chrono.h>
 
 #include "armor.hpp"
 #include "classifier.hpp"
-
+#include "/home/c/rm_xz_vision26/tools/img_tools.hpp"
+#include "/home/c/rm_xz_vision26/tools/logger.hpp"
 namespace xz_vision
 {
   // 装甲板检测类
@@ -16,7 +19,8 @@ namespace xz_vision
   public:
     Detector(const std::string& config_path, bool debug = true);
 
-    std::list<Aromr> detect(const cv::Mat& bgr_img, int frame_count = -1);
+    std::list<Armor> detect(const cv::Mat& bgr_img, int frame_count = -1);
+    bool detect(Armor & armor, const cv::Mat & bgr_img);
 
   private:
     Classifier classifier_;
@@ -32,5 +36,20 @@ namespace xz_vision
 
     bool debug_;
     std::string save_path_;
-  }
+
+    bool check_geometry(const Lightbar& lightbar) const;
+    bool check_geometry(const Armor& armor) const;
+    bool check_name(const Armor& armor) const;
+    bool check_type(const Armor& armor) const;
+
+    Color get_color(const cv::Mat& bgr_img, const std::vector<cv::Point>& contour) const;
+    cv::Mat get_pattern(const cv::Mat& bgr_img, const Armor& armor) const;
+    ArmorType get_type(const Armor& armor);
+    cv::Point2f get_center_norm(const cv::Mat& bgr_img, const cv::Point2f& center) const;
+
+    void save(const Armor& armor) const;
+    void show_result(const cv::Mat& binary_img, const cv::Mat& bgr_img,
+                     const std::list<Lightbar>& lightbars, const std::list<Armor>& armors,
+                     int frame_count) const;
+  };
 } // namespace xz_vision

@@ -99,8 +99,8 @@ namespace tools
     size_t max_size_;
     mutable std::mutex mutex_;
     std::condition_variable not_empty_condition_;
-    std::function<void(void)> full_handler;
-  }
+    std::function<void(void)> full_handler_;
+  };
 
 } // namespace tools
 

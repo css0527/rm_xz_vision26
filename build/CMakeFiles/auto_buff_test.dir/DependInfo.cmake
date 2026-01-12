@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/chaichai/project/rm_xz_vision26/test/auto_buff_test.cpp" "CMakeFiles/auto_buff_test.dir/test/auto_buff_test.cpp.o" "gcc" "CMakeFiles/auto_buff_test.dir/test/auto_buff_test.cpp.o.d"
+  "/home/c/rm_xz_vision26/test/auto_buff_test.cpp" "CMakeFiles/auto_buff_test.dir/test/auto_buff_test.cpp.o" "gcc" "CMakeFiles/auto_buff_test.dir/test/auto_buff_test.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

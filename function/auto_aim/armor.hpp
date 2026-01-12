@@ -14,12 +14,14 @@ namespace xz_vision
         blue,
         extinguish,
         purple,
+        gray
     };
     const std::vector<std::string> COLOR = {
         "red", 
         "blue", 
         "extinguish", 
-        "purple"
+        "purple",
+        "gray"
     };
 
     // 装甲板类型
@@ -40,10 +42,11 @@ namespace xz_vision
         two,
         three,
         four,
+        five,
         sentry,
         outpost,
         base,
-        unkowned
+        not_armor
     };
     const std::vector<std::string>
         ARMOR_NAME = {

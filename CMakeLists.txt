@@ -8,25 +8,91 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Release)
 message(STATUS "--------------------CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}--------------------")
 
+# 查找库部分
+find_library(MVCAMERA_CONTROL_LIB 
+    NAMES MvCameraControl 
+    PATHS ${CMAKE_SOURCE_DIR}/ecu/hikrobot/lib/amd64
+    REQUIRED
+)
+
+# 查找libusb库
+find_library(LIBUSB_LIB 
+    NAMES usb-1.0
+    PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu
+    REQUIRED
+)
+set(LIBUSB_LIBRARIES ${LIBUSB_LIB})
+set(MVCAMERA_CONTROL_LIBRARIES ${MVCAMERA_CONTROL_LIB})
+
 find_package(OpenCV REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(nlohmann_json REQUIRED)
-set(OpenVINO_DIR "/opt/intel/openvino_2024.6.0/runtime/cmake/")
+set(OpenVINO_DIR "/home/c/opt/intel/openvino_ubuntu22_2025/runtime/cmake/")
 find_package(OpenVINO REQUIRED)
+find_package(Ceres REQUIRED)
 
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
+include_directories(/usr/include/libusb-1.0
+                    /home/c/opt/intel/openvino_ubuntu22_2025/runtime/include
+                    )  # 直接添加libusb头文件路径
 
+add_subdirectory(ecu)
 add_subdirectory(function/auto_buff)
+add_subdirectory(function/auto_aim)
 add_subdirectory(tools)
 
 # #################tests##################
 add_executable(auto_buff_test test/auto_buff_test.cpp)
 add_executable(auto_buff_main test/auto_buff_main.cpp)
+add_executable(test1 test/test1.cpp)
+add_executable(exit_test test/exit_test.cpp)
+
 
 target_link_libraries(auto_buff_test ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
 target_link_libraries(auto_buff_main ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
+target_link_libraries(auto_buff_test PRIVATE
+    ${OpenCV_LIBS}
+    auto_buff
+    tools
+    ecu
+    auto_aim
+    yaml-cpp
+    fmt::fmt
+    openvino::runtime
+    ${CERES_LIBRARIES}
+    ${MVCAMERA_CONTROL_LIB}  # 添加海康相机库
+    ${LIBUSB_LIB}      # 添加libusb库
+)
+
+target_link_libraries(test1 PRIVATE
+    ${OpenCV_LIBS}
+    auto_buff
+    tools
+    ecu
+    auto_aim
+    yaml-cpp
+    fmt::fmt
+    openvino::runtime
+    ${CERES_LIBRARIES}
+    ${MVCAMERA_CONTROL_LIB}  # 添加海康相机库
+    ${LIBUSB_LIB}      # 添加libusb库
+)
+
+target_link_libraries(exit_test PRIVATE
+    ${OpenCV_LIBS}
+    auto_buff
+    tools
+    ecu
+    auto_aim
+    yaml-cpp
+    fmt::fmt
+    openvino::runtime
+    ${CERES_LIBRARIES}
+    ${MVCAMERA_CONTROL_LIB}  # 添加海康相机库
+    ${LIBUSB_LIB}      # 添加libusb库
+)

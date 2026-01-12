@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-namespace auto_aim
+namespace xz_vision
 {
   Classifier::Classifier(const std::string& config_path)
   {

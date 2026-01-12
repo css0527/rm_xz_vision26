@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
 
-#include "tools/logger.hpp"
-#include "tools/math_tools.hpp"
-#include "tools/yaml.hpp"
+#include "/home/c/rm_xz_vision26/tools/logger.hpp"
+#include "/home/c/rm_xz_vision26/tools/math_tool.hpp"
+#include "/home/c/rm_xz_vision26/tools/yaml.hpp"
 
 namespace ecu
 {
@@ -19,7 +19,7 @@ namespace ecu
       , fd_(-1)
       , running_(true)
   {
-    tools::logger()->info("[SerialBoard] 初始化 SerialBoard ...");
+    tools::logger()->info("[SerialPort] 初始化 SerialPort ...");
 
     // 读取配置文件
     auto dev_path = read_yaml(config_path);
@@ -35,6 +35,8 @@ namespace ecu
     if (tcgetattr(fd_, &tty) != 0) {
       throw std::runtime_error("[SerialBoard] 无法获取串口属性");
     }
+
+    read_yaml(config_path); // 确保 port_ 和 baudrate_ 已初始化
 
     if (baudrate_ == 115200) {
       cfsetospeed(&tty, B115200);
@@ -64,7 +66,7 @@ namespace ecu
     tools::logger()->info("[SerialBoard] 成功打开串口: {}", dev_path);
 
     // 启动读线程
-    read_thread_ = std::thread(&SerialBoard::readLoop, this);
+    read_thread_ = std::thread(&SerialPort::readLoop, this);
   }
 
   SerialPort::~SerialPort()
