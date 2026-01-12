@@ -89,15 +89,26 @@ auto_buff_test_OBJECTS = \
 
 # External object files for target auto_buff_test
 auto_buff_test_EXTERNAL_OBJECTS = \
+<<<<<<< HEAD
 "/home/c/rm_xz_vision26/build/function/auto_buff/CMakeFiles/auto_buff.dir/rune_detector.cpp.o" \
 "/home/c/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/exiter.cpp.o" \
 "/home/c/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/logger.cpp.o" \
 "/home/c/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/imgs_tool.cpp.o" \
 "/home/c/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/img_tools.cpp.o" \
 "/home/c/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/plotter.cpp.o"
+=======
+"/home/chaichai/project/rm_xz_vision26/build/function/auto_buff/CMakeFiles/auto_buff.dir/rune_detector.cpp.o" \
+"/home/chaichai/project/rm_xz_vision26/build/function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o" \
+"/home/chaichai/project/rm_xz_vision26/build/function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o" \
+"/home/chaichai/project/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/exiter.cpp.o" \
+"/home/chaichai/project/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/logger.cpp.o" \
+"/home/chaichai/project/rm_xz_vision26/build/tools/CMakeFiles/tools.dir/imgs_tool.cpp.o"
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 
 auto_buff_test: CMakeFiles/auto_buff_test.dir/test/auto_buff_test.cpp.o
 auto_buff_test: function/auto_buff/CMakeFiles/auto_buff.dir/rune_detector.cpp.o
+auto_buff_test: function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o
+auto_buff_test: function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o
 auto_buff_test: tools/CMakeFiles/tools.dir/exiter.cpp.o
 auto_buff_test: tools/CMakeFiles/tools.dir/logger.cpp.o
 auto_buff_test: tools/CMakeFiles/tools.dir/imgs_tool.cpp.o

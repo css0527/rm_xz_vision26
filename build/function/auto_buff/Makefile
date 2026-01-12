@@ -130,6 +130,30 @@ auto_buff/fast:
 	cd /home/c/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/build
 .PHONY : auto_buff/fast
 
+power_rune.o: power_rune.cpp.o
+.PHONY : power_rune.o
+
+# target to build an object file
+power_rune.cpp.o:
+	cd /home/chaichai/project/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o
+.PHONY : power_rune.cpp.o
+
+power_rune.i: power_rune.cpp.i
+.PHONY : power_rune.i
+
+# target to preprocess a source file
+power_rune.cpp.i:
+	cd /home/chaichai/project/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.i
+.PHONY : power_rune.cpp.i
+
+power_rune.s: power_rune.cpp.s
+.PHONY : power_rune.s
+
+# target to generate assembly for a file
+power_rune.cpp.s:
+	cd /home/chaichai/project/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.s
+.PHONY : power_rune.cpp.s
+
 rune_detector.o: rune_detector.cpp.o
 .PHONY : rune_detector.o
 
@@ -154,6 +178,30 @@ rune_detector.cpp.s:
 	cd /home/c/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/rune_detector.cpp.s
 .PHONY : rune_detector.cpp.s
 
+rune_solver.o: rune_solver.cpp.o
+.PHONY : rune_solver.o
+
+# target to build an object file
+rune_solver.cpp.o:
+	cd /home/chaichai/project/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o
+.PHONY : rune_solver.cpp.o
+
+rune_solver.i: rune_solver.cpp.i
+.PHONY : rune_solver.i
+
+# target to preprocess a source file
+rune_solver.cpp.i:
+	cd /home/chaichai/project/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.i
+.PHONY : rune_solver.cpp.i
+
+rune_solver.s: rune_solver.cpp.s
+.PHONY : rune_solver.s
+
+# target to generate assembly for a file
+rune_solver.cpp.s:
+	cd /home/chaichai/project/rm_xz_vision26/build && $(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.s
+.PHONY : rune_solver.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -163,9 +211,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... auto_buff"
+	@echo "... power_rune.o"
+	@echo "... power_rune.i"
+	@echo "... power_rune.s"
 	@echo "... rune_detector.o"
 	@echo "... rune_detector.i"
 	@echo "... rune_detector.s"
+	@echo "... rune_solver.o"
+	@echo "... rune_solver.i"
+	@echo "... rune_solver.s"
 .PHONY : help
 
 

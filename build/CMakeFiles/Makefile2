@@ -64,14 +64,28 @@ CMAKE_BINARY_DIR = /home/c/rm_xz_vision26/build
 
 # The main recursive "all" target.
 all: CMakeFiles/auto_buff_test.dir/all
+<<<<<<< HEAD
 all: CMakeFiles/test1.dir/all
 all: CMakeFiles/exit_test.dir/all
 all: ecu/all
+=======
+all: CMakeFiles/auto_buff_main.dir/all
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 all: function/auto_buff/all
 all: function/auto_aim/all
 all: tools/all
 .PHONY : all
 
+<<<<<<< HEAD
+=======
+# The main recursive "codegen" target.
+codegen: CMakeFiles/auto_buff_test.dir/codegen
+codegen: CMakeFiles/auto_buff_main.dir/codegen
+codegen: function/auto_buff/codegen
+codegen: tools/codegen
+.PHONY : codegen
+
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 # The main recursive "preinstall" target.
 preinstall: ecu/preinstall
 preinstall: function/auto_buff/preinstall
@@ -81,9 +95,13 @@ preinstall: tools/preinstall
 
 # The main recursive "clean" target.
 clean: CMakeFiles/auto_buff_test.dir/clean
+<<<<<<< HEAD
 clean: CMakeFiles/test1.dir/clean
 clean: CMakeFiles/exit_test.dir/clean
 clean: ecu/clean
+=======
+clean: CMakeFiles/auto_buff_main.dir/clean
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 clean: function/auto_buff/clean
 clean: function/auto_aim/clean
 clean: tools/clean
@@ -159,12 +177,20 @@ CMakeFiles/auto_buff_test.dir/all: function/auto_aim/CMakeFiles/auto_aim.dir/all
 CMakeFiles/auto_buff_test.dir/all: tools/CMakeFiles/tools.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/auto_buff_test.dir/build.make CMakeFiles/auto_buff_test.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/auto_buff_test.dir/build.make CMakeFiles/auto_buff_test.dir/build
+<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/c/rm_xz_vision26/build/CMakeFiles --progress-num=6,7 "Built target auto_buff_test"
+=======
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/chaichai/project/rm_xz_vision26/build/CMakeFiles --progress-num=6,7 "Built target auto_buff_test"
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 .PHONY : CMakeFiles/auto_buff_test.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/auto_buff_test.dir/rule: cmake_check_build_system
+<<<<<<< HEAD
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/c/rm_xz_vision26/build/CMakeFiles 16
+=======
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/chaichai/project/rm_xz_vision26/build/CMakeFiles 8
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/auto_buff_test.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/c/rm_xz_vision26/build/CMakeFiles 0
 .PHONY : CMakeFiles/auto_buff_test.dir/rule
@@ -179,6 +205,7 @@ CMakeFiles/auto_buff_test.dir/clean:
 .PHONY : CMakeFiles/auto_buff_test.dir/clean
 
 #=============================================================================
+<<<<<<< HEAD
 # Target rules for target CMakeFiles/test1.dir
 
 # All Build rule for target.
@@ -261,6 +288,38 @@ ecu: ecu/CMakeFiles/ecu.dir/rule
 ecu/CMakeFiles/ecu.dir/clean:
 	$(MAKE) $(MAKESILENT) -f ecu/CMakeFiles/ecu.dir/build.make ecu/CMakeFiles/ecu.dir/clean
 .PHONY : ecu/CMakeFiles/ecu.dir/clean
+=======
+# Target rules for target CMakeFiles/auto_buff_main.dir
+
+# All Build rule for target.
+CMakeFiles/auto_buff_main.dir/all: function/auto_buff/CMakeFiles/auto_buff.dir/all
+CMakeFiles/auto_buff_main.dir/all: tools/CMakeFiles/tools.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auto_buff_main.dir/build.make CMakeFiles/auto_buff_main.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auto_buff_main.dir/build.make CMakeFiles/auto_buff_main.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/chaichai/project/rm_xz_vision26/build/CMakeFiles --progress-num=4,5 "Built target auto_buff_main"
+.PHONY : CMakeFiles/auto_buff_main.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/auto_buff_main.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/chaichai/project/rm_xz_vision26/build/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/auto_buff_main.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/chaichai/project/rm_xz_vision26/build/CMakeFiles 0
+.PHONY : CMakeFiles/auto_buff_main.dir/rule
+
+# Convenience name for target.
+auto_buff_main: CMakeFiles/auto_buff_main.dir/rule
+.PHONY : auto_buff_main
+
+# codegen rule for target.
+CMakeFiles/auto_buff_main.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auto_buff_main.dir/build.make CMakeFiles/auto_buff_main.dir/codegen
+.PHONY : CMakeFiles/auto_buff_main.dir/codegen
+
+# clean rule for target.
+CMakeFiles/auto_buff_main.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auto_buff_main.dir/build.make CMakeFiles/auto_buff_main.dir/clean
+.PHONY : CMakeFiles/auto_buff_main.dir/clean
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 
 #=============================================================================
 # Target rules for target function/auto_buff/CMakeFiles/auto_buff.dir
@@ -269,12 +328,20 @@ ecu/CMakeFiles/ecu.dir/clean:
 function/auto_buff/CMakeFiles/auto_buff.dir/all:
 	$(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/depend
 	$(MAKE) $(MAKESILENT) -f function/auto_buff/CMakeFiles/auto_buff.dir/build.make function/auto_buff/CMakeFiles/auto_buff.dir/build
+<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/c/rm_xz_vision26/build/CMakeFiles --progress-num=5 "Built target auto_buff"
+=======
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/chaichai/project/rm_xz_vision26/build/CMakeFiles --progress-num=1,2,3 "Built target auto_buff"
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 .PHONY : function/auto_buff/CMakeFiles/auto_buff.dir/all
 
 # Build rule for subdir invocation for target.
 function/auto_buff/CMakeFiles/auto_buff.dir/rule: cmake_check_build_system
+<<<<<<< HEAD
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/c/rm_xz_vision26/build/CMakeFiles 1
+=======
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/chaichai/project/rm_xz_vision26/build/CMakeFiles 3
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 function/auto_buff/CMakeFiles/auto_buff.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/c/rm_xz_vision26/build/CMakeFiles 0
 .PHONY : function/auto_buff/CMakeFiles/auto_buff.dir/rule
@@ -321,7 +388,11 @@ function/auto_aim/CMakeFiles/auto_aim.dir/clean:
 tools/CMakeFiles/tools.dir/all:
 	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/tools.dir/build.make tools/CMakeFiles/tools.dir/depend
 	$(MAKE) $(MAKESILENT) -f tools/CMakeFiles/tools.dir/build.make tools/CMakeFiles/tools.dir/build
+<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/c/rm_xz_vision26/build/CMakeFiles --progress-num=16,17,18,19,20 "Built target tools"
+=======
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/chaichai/project/rm_xz_vision26/build/CMakeFiles --progress-num=8,9,10 "Built target tools"
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
 .PHONY : tools/CMakeFiles/tools.dir/all
 
 # Build rule for subdir invocation for target.

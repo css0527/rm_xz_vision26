@@ -1,3 +1,7 @@
+  # 是否启用调试(显示灰度图)
+whether_use_debug_pre: true
+whether_use_debug_arrow: true
+
 # 传统视觉参数
   # image size
 image_width: 600
@@ -9,8 +13,7 @@ param_maxval: 255
   # 矩形核
 param_kernel_width: 4
 param_kernel_height: 4
-  # 是否启用调试(显示灰度图)
-whether_use_debug: true
+
 
 # 分类器
 classify_model: /home/c/rm_xz_vision26/assets/tiny_resnet.onnx
@@ -62,5 +65,21 @@ armor_outside_height: 145.045
 
 armor_inside_width: 352.88
 armor_inside_y: 46.206
+
+# BuffSolver配置参数 
+ # 期望的帧率
+FPS: 120
+min_fit_data_size: 20
+max_fit_data_size: 1200
+
+# 弹速
+min_bullet_speed: 20
+default_bullet_speed: 28
+
+# 补偿
+compansate_time: 75
+compansate_pitch: 0.0
+compansate_yaw: 0.0
+
 
 

@@ -83,7 +83,37 @@ function/auto_buff/CMakeFiles/auto_buff.dir/rune_detector.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/auto_buff.dir/rune_detector.cpp.s"
 	cd /home/c/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/c/rm_xz_vision26/function/auto_buff/rune_detector.cpp -o CMakeFiles/auto_buff.dir/rune_detector.cpp.s
 
+function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o: function/auto_buff/CMakeFiles/auto_buff.dir/flags.make
+function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o: /home/chaichai/project/rm_xz_vision26/function/auto_buff/rune_solver.cpp
+function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o: function/auto_buff/CMakeFiles/auto_buff.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/chaichai/project/rm_xz_vision26/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o"
+	cd /home/chaichai/project/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o -MF CMakeFiles/auto_buff.dir/rune_solver.cpp.o.d -o CMakeFiles/auto_buff.dir/rune_solver.cpp.o -c /home/chaichai/project/rm_xz_vision26/function/auto_buff/rune_solver.cpp
+
+function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/auto_buff.dir/rune_solver.cpp.i"
+	cd /home/chaichai/project/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/chaichai/project/rm_xz_vision26/function/auto_buff/rune_solver.cpp > CMakeFiles/auto_buff.dir/rune_solver.cpp.i
+
+function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/auto_buff.dir/rune_solver.cpp.s"
+	cd /home/chaichai/project/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/chaichai/project/rm_xz_vision26/function/auto_buff/rune_solver.cpp -o CMakeFiles/auto_buff.dir/rune_solver.cpp.s
+
+function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o: function/auto_buff/CMakeFiles/auto_buff.dir/flags.make
+function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o: /home/chaichai/project/rm_xz_vision26/function/auto_buff/power_rune.cpp
+function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o: function/auto_buff/CMakeFiles/auto_buff.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/chaichai/project/rm_xz_vision26/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o"
+	cd /home/chaichai/project/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o -MF CMakeFiles/auto_buff.dir/power_rune.cpp.o.d -o CMakeFiles/auto_buff.dir/power_rune.cpp.o -c /home/chaichai/project/rm_xz_vision26/function/auto_buff/power_rune.cpp
+
+function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/auto_buff.dir/power_rune.cpp.i"
+	cd /home/chaichai/project/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/chaichai/project/rm_xz_vision26/function/auto_buff/power_rune.cpp > CMakeFiles/auto_buff.dir/power_rune.cpp.i
+
+function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/auto_buff.dir/power_rune.cpp.s"
+	cd /home/chaichai/project/rm_xz_vision26/build/function/auto_buff && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/chaichai/project/rm_xz_vision26/function/auto_buff/power_rune.cpp -o CMakeFiles/auto_buff.dir/power_rune.cpp.s
+
 auto_buff: function/auto_buff/CMakeFiles/auto_buff.dir/rune_detector.cpp.o
+auto_buff: function/auto_buff/CMakeFiles/auto_buff.dir/rune_solver.cpp.o
+auto_buff: function/auto_buff/CMakeFiles/auto_buff.dir/power_rune.cpp.o
 auto_buff: function/auto_buff/CMakeFiles/auto_buff.dir/build.make
 .PHONY : auto_buff
 

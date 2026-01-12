@@ -13,8 +13,8 @@
  * 2: 在 1 的基础上显示灯条、roi
  * 3: 在 2 的基础上显示二值化图片
  */
-// #define SHOW_IMAGE 2
-// #define CONSOLE_OUTPUT 2
+#define SHOW_IMAGE 0
+#define CONSOLE_OUTPUT 0
 
 namespace auto_buff
 {
@@ -31,6 +31,14 @@ namespace auto_buff
   enum class Mode { SMALL, BIG };
 
   // 颜色
+  inline static cv::Scalar DRAW_COLOR;
+  const inline static cv::Scalar RED{0, 0, 255};
+  const inline static cv::Scalar BLUE{255, 0, 0};
+  const inline static cv::Scalar GREEN{0, 255, 0};
+  const inline static cv::Scalar WHITE{255, 255, 255};
+  const inline static cv::Scalar YELLOW{0, 255, 255};
+  const inline static cv::Scalar PURPLE{128, 0, 128};
+
   enum class Color { RED, BLUE };
 
   // 旋转方向
@@ -139,19 +147,37 @@ namespace auto_buff
   {
   public:
     BuffDetection(const std::string& config);
-
+    inline void drawTargetPoint(const cv::Point2f& point)
+    {
+      cv::circle(m_image_show, point, 4, DRAW_COLOR, 2);
+    }
     bool detect(const Frame& frame);
 
+    inline void visualize() { cv::imshow("visualized", m_image_show); }
+
+    /**
+     * @brief
+     * 得到像素坐标系特征点，分别为装甲板内灯条的左上，右上，外灯条的中上，左下，右下，中心R。
+     * @return std::vector<cv::Point2f>
+     */
+    inline std::vector<cv::Point2f> getCameraPoints()
+    {
+      return {m_armor.m_tlIn,  m_armor.m_trIn,  (m_armor.m_tlOut + m_armor.m_trOut) * 0.5,
+              m_armor.m_blOut, m_armor.m_brOut, m_centerR.m_center_R};
+    }
+    //============ 状态参数 ============
     // private:
-    cv::Mat m_image_armor;   // 检测装甲板边框用的二值化图片
+    cv::Mat m_image_arrow; // 检测箭头用的二值化图片
+    cv::Mat m_image_armor; // 检测装甲板边框用的二值化图片
+    cv::Mat m_image_show;  // 可视化图片
+
     cv::Mat m_local_mask;    // 局部 roi 的掩码
-    cv::Mat m_image_arrow;   // 检测箭头用的二值化图片
     cv::Rect2f m_global_roi; // 全局 roi ，用来圈定识别的范围，加快处理速度
     cv::Rect2f m_armor_roi;  // 装甲板 roi
     cv::Rect2f m_center_roi; // 中心 R roi
     CenterR m_centerR;       // 中心 R
-    cv::Mat m_image_show;    // 可视化图片
-    cv::Mat m_image_center;  // 检测中心 R 用的二值化图片
+
+    cv::Mat m_image_center; // 检测中心 R 用的二值化图片
 
     Status m_status; // 检测标志，包括成功、箭头检测失败、装甲板检测失败、中心 R 检测失败
     Armor m_armor;   // 装甲板
@@ -161,8 +187,12 @@ namespace auto_buff
     std::chrono::steady_clock::time_point m_frameTime; // 当前帧的时间戳
     int m_lightArmorNum;                               // 点亮的装甲板数目
 
+    inline static Mode MODE;
+
     //============ 初始化参数 ============//
-    bool whether_use_debug;
+    bool whether_use_debug_pre;
+    bool whether_use_debug_arrow;
+
     double param_thresh;
     double param_maxval;
     int param_kernel_width;
@@ -239,16 +269,23 @@ namespace auto_buff
                       const Armor& armor);
     static double calAngleBetweenLightlines(const LightLine& l1, const LightLine& l2);
 
-    void draw(const LightLine& lightline, const cv::Scalar& color, const int thickness,
-              const cv::Rect2f& localRoi);
-    void draw(const cv::RotatedRect& rotatedRect, const cv::Scalar& color, const int thickness,
-              const cv::Rect2f& localRoi);
-    void draw(const cv::Rect2f& rect, const cv::Scalar& color, const int thickness,
-              const cv::Rect2f& localRoi);
-    void draw(const std::vector<cv::Point2f>& points, const cv::Scalar& color, const int thickness,
-              const cv::Rect2f& localRoi);
+    //====================绘图函数====================
+    void draw(const LightLine& lightline, const cv::Scalar& color, const int thickness = 1,
+              const cv::Rect2f& localRoi = cv::Rect2f(0, 0, image_width, image_height));
+
+    void draw(const cv::RotatedRect& rotatedRect, const cv::Scalar& color, const int thickness = 1,
+              const cv::Rect2f& localRoi = cv::Rect2f(0, 0, image_width, image_height));
+
+    void draw(const cv::Rect2f& rect, const cv::Scalar& color, const int thickness = 1,
+              const cv::Rect2f& localRoi = cv::Rect2f(0, 0, image_width, image_height));
+
+    void draw(const std::vector<cv::Point2f>& points, const cv::Scalar& color,
+              const int thickness = 1,
+              const cv::Rect2f& localRoi = cv::Rect2f(0, 0, image_width, image_height));
+
     void draw(const cv::Point2f* points, const size_t size, const cv::Scalar& color,
-              const int thickness, const cv::Rect2f& localRoi);
+              const int thickness = 1,
+              const cv::Rect2f& localRoi = cv::Rect2f(0, 0, image_width, image_height));
   };
 
 } // namespace auto_buff

@@ -192,9 +192,13 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/auto_buff_test.dir/DependInfo.cmake"
+<<<<<<< HEAD
   "CMakeFiles/test1.dir/DependInfo.cmake"
   "CMakeFiles/exit_test.dir/DependInfo.cmake"
   "ecu/CMakeFiles/ecu.dir/DependInfo.cmake"
+=======
+  "CMakeFiles/auto_buff_main.dir/DependInfo.cmake"
+>>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a
   "function/auto_buff/CMakeFiles/auto_buff.dir/DependInfo.cmake"
   "function/auto_aim/CMakeFiles/auto_aim.dir/DependInfo.cmake"
   "tools/CMakeFiles/tools.dir/DependInfo.cmake"

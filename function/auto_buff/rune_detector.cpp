@@ -2,6 +2,8 @@
 
 namespace auto_buff
 {
+  std::mutex MUTEX;
+
   /**
    @brief 初始化参数
     */
@@ -11,6 +13,11 @@ namespace auto_buff
     tools::logger()->debug("-----BuffDetection环境配置中-----");
     auto yaml = YAML::LoadFile(config);
 
+    // 调试文件
+    whether_use_debug_pre = yaml["whether_use_debug_pre"].as<bool>();
+    whether_use_debug_arrow = yaml["whether_use_debug_arrow"].as<bool>();
+
+    DRAW_COLOR = BLUE;
     image_width = yaml["image_width"].as<float>();
     image_height = yaml["image_height"].as<float>();
 
@@ -21,7 +28,6 @@ namespace auto_buff
     param_maxval = yaml["param_maxval"].as<double>();
     param_kernel_width = yaml["param_kernel_width"].as<int>();
     param_kernel_height = yaml["param_kernel_height"].as<int>();
-    whether_use_debug = yaml["whether_use_debug"].as<bool>();
 
     min_arrow_lightline_area = yaml["min_arrow_lightline_area"].as<double>();
     max_arrow_lightline_area = yaml["max_arrow_lightline_area"].as<double>();
@@ -75,6 +81,23 @@ namespace auto_buff
     m_lightArmorNum = 0;
   };
 
+  void Frame::set(const cv::Mat& image, const std::chrono::steady_clock::time_point& time)
+  {
+    m_image = image;
+    m_time = time;
+  }
+
+  // 提供一种方式在对象创建后重新设置其内容，避免频繁构造新对象（可能用于性能优化或复用对象）
+  void Frame::set(const cv::Mat& image, const std::chrono::steady_clock::time_point& time,
+                  double pitch, double yaw, double roll)
+  {
+    m_image = image;
+    m_time = time;
+    m_roll = roll;
+    m_pitch = pitch;
+    m_yaw = yaw;
+  }
+
   /**
    * @brief 检测箭头，装甲板和中心。如果所有检测均成功，则返回 true，否则返回 false。
    * @param[in] Frame        从相机传来的一帧图像，包括图像本身和其时间戳
@@ -83,31 +106,34 @@ namespace auto_buff
    */
   bool BuffDetection::detect(const Frame& frame)
   {
+    // 表示尚未进行过 ROI 交换
     bool reverse = false;
-    preprocess_imgs(frame); // 预处理
+    preprocess_imgs(frame);
+    // 预处理
     if (check_arrow() == false) {
       m_status = Status::ARROW_FAILURE;
       goto FAIL;
     }
-    set_local_roi();
-  RESTART:
-    if (detect_armor() == false) {
-      m_status = Status::ARMOR_FAILURE;
-      goto FAIL;
-    }
-    if (detect_centerR() == false) {
-      m_status = Status::CENTER_FAILURE;
-      if (reverse == false) {
-        std::swap(m_center_roi, m_armor_roi);
-        reverse = true;
-        goto RESTART;
-      } else {
-        goto FAIL;
-      }
-    }
-    set_armor();
-    set_global_roi();
-    m_status = Status::SUCCESS;
+
+    //   set_local_roi();
+    // RESTART:
+    //   if (detect_armor() == false) {
+    //     m_status = Status::ARMOR_FAILURE;
+    //     goto FAIL;
+    //   }
+    //   if (detect_centerR() == false) {
+    //     m_status = Status::CENTER_FAILURE;
+    //     if (reverse == false) {
+    //       std::swap(m_center_roi, m_armor_roi);
+    //       reverse = true;
+    //       goto RESTART;
+    //     } else {
+    //       goto FAIL;
+    //     }
+    //   }
+    //   set_armor();
+    //   set_global_roi();
+    //   m_status = Status::SUCCESS;
     return true;
   FAIL:
     // 如果检测失败，则将全局 roi 设为和原图片一样大小
@@ -118,278 +144,231 @@ namespace auto_buff
   };
 
   /**
-   * @brief 装甲板四个角点需要根据其与中心的位置关系重新设置，以便于后面的 PnP
-   * 解算。之前的四个角点设置与 Lightline 构造函数的角点一致。
-   */
-  void BuffDetection::set_armor()
-  {
-    // 装甲板里外边框的重排序，之前根据面积确定边框，但可能不准确，现在根据到中心的距离确定
-    if (tools::p2p_distance(m_armor.m_inside.m_center, m_centerR.m_center_R) >
-        tools::p2p_distance(m_armor.m_outside.m_center, m_centerR.m_center_R)) {
-      std::swap(m_armor.m_inside, m_armor.m_outside);
-      std::swap(m_armor.m_tlIn, m_armor.m_tlOut);
-      std::swap(m_armor.m_trIn, m_armor.m_trOut);
-      std::swap(m_armor.m_blIn, m_armor.m_blOut);
-      std::swap(m_armor.m_brIn, m_armor.m_brOut);
-    }
-    /**
-     * 当中心 R
-     * 的纵坐标小于装甲板的纵坐标时，左上角和右下角、左下角和右上角的角点是相反的，需要交换这两对点。
-     * 但由于图像上存在误差，因此实际上设置中心 R
-     * 的纵坐标明显小于装甲板的纵坐标时才交换，其它情况下使用另一种判断方式，确保正确判断。
+    @brief 图像预处理
      */
-    if (m_centerR.m_center_R.y < m_armor.m_center.y - armor_center_vertical_distance_threshold) {
-      std::swap(m_armor.m_tlIn, m_armor.m_brIn);
-      std::swap(m_armor.m_tlOut, m_armor.m_brOut);
-      std::swap(m_armor.m_trIn, m_armor.m_blIn);
-      std::swap(m_armor.m_trOut, m_armor.m_blOut);
-    }
-    /**
-     * 另一种判断方式根据装甲板的横坐标和中心的横坐标，以及装甲板左上角和左下角横坐标的位置关系得到。
-     * 在中心 R 的纵坐标明显大于装甲板中心时不需要交换，因此在纵坐标关系不明显时才进行判断。
-     * 在上面的约束下，如果装甲板横坐标大于中心，则装甲板明显在中心右侧，此时根据之前的角点设置，左上角点横坐标大于左下角点横坐标时，判断装甲板在中心上面，否则为下面。
-     * 装甲板横坐标小于中心时同理。
-     * 注：前一种判断方式在纵坐标差距不明显时会出现误差，而后一种在横坐标差距不明显时会出现误差。
-     * 因此将两者结合起来使用，即在纵坐标差距明显时使用前一种，纵坐标差距不明显时使用后一种，可以实现全场景下的覆盖。
-     */
-    else if (m_centerR.m_center_R.y <
-             m_armor.m_center.y + armor_center_vertical_distance_threshold) {
-      if (((m_centerR.m_center_R.x < m_armor.m_center.x &&
-            m_armor.m_inside.m_tl.x > m_armor.m_inside.m_bl.x) ||
-           (m_centerR.m_center_R.x > m_armor.m_center.x &&
-            m_armor.m_inside.m_tl.x < m_armor.m_inside.m_bl.x)) == false) {
-        std::swap(m_armor.m_tlIn, m_armor.m_brIn);
-        std::swap(m_armor.m_trIn, m_armor.m_blIn);
-      }
-      if (((m_centerR.m_center_R.x < m_armor.m_center.x &&
-            m_armor.m_outside.m_tl.x > m_armor.m_outside.m_bl.x) ||
-           (m_centerR.m_center_R.x > m_armor.m_center.x &&
-            m_armor.m_outside.m_tl.x < m_armor.m_outside.m_bl.x)) == false) {
-        std::swap(m_armor.m_tlOut, m_armor.m_brOut);
-        std::swap(m_armor.m_trOut, m_armor.m_blOut);
-      }
-    }
-#if CONSOLE_OUTPUT >= 2
-    MUTEX.lock();
-    std::cout << "feature camera points: ";
-    auto cameraPoints{getCameraPoints()};
-    std::for_each(cameraPoints.begin(), cameraPoints.end(),
-                  [](auto&& it) { std::cout << it << " "; });
-    std::cout << std::endl;
-    MUTEX.unlock();
-#endif
-  }
-
-  /**
-   * @brief 寻找中心 R ，找到则返回 true，否则返回 false
-   * @return true
-   * @return false
-   */
-  bool BuffDetection::detect_centerR()
+  void BuffDetection::preprocess_imgs(const Frame& frame)
   {
-    m_image_center = (m_image_armor & m_local_mask)(m_center_roi);
-    // 寻找中心灯条，可能是多个
-    std::vector<LightLine> lightlines;
-    if (findCenterLightlines(m_image_center, lightlines, m_global_roi, m_center_roi) == false) {
-      return false;
+    // tools::logger()->debug("-----preprocess_imgs-----");
+    if (frame.m_image.empty()) {
+      tools::logger()->error("[BuffDetection::preprocess_imgs] Error: Received an empty image!");
+      return;
     }
-#if SHOW_IMAGE >= 2
-    for (const auto& lightline : lightlines) {
-      draw(lightline, Param::YELLOW, 1, m_center_roi);
-    }
-#endif
-    // 从灯条中寻找中心 R
-    if (find_centerR(m_centerR, lightlines, m_arrow, m_armor) == false) {
-      return false;
-    }
-#if SHOW_IMAGE >= 1
-    draw(m_centerR.m_bounding_rect, cv::Scalar(225, 225, 225), 2, m_center_roi);
-#endif
-    return true;
-  }
 
-  /**
-   * @brief 寻找符合中心 R 要求的中心灯条，并将其存入一个向量中。成功返回 true，否则返回
-   * false。
-   * @param[in] image         带有中心区域的图片
-   * @param[in] lightlines    存储的灯条向量
-   * @param[in] globalRoi     全局 roi
-   * @param[in] localRoi      局部 roi
-   * @return true
-   * @return false
-   */
-  bool BuffDetection::findCenterLightlines(const cv::Mat& image, std::vector<LightLine>& lightlines,
-                                           const cv::Rect2f& globalRoi, const cv::Rect2f& localRoi)
-  {
-    // 寻找轮廓
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(image, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
-    for (const auto& contour : contours) {
-      LightLine lightline(contour, globalRoi, localRoi);
-      // 判断面积
-      if (tools::inRange(lightline.m_area, min_center_area, max_center_area) == false) {
-        continue;
-      }
-      // 判断长宽比
-      if (lightline.m_aspect_ratio > max_center_aspect_ratio) {
-        continue;
-      }
-      // 如果全部符合，则存入向量中
-      lightlines.emplace_back(std::move(lightline));
-    }
-    // 符合要求灯条的数量为 0 则失败
-    if (lightlines.empty()) {
-      return false;
-    }
-    return true;
-  }
+    m_image_show = frame.m_image.clone();
 
-  /**
-   * @brief 寻找装甲板，找到则返回 true，否则为 false
-   * @return true
-   * @return false
-   */
-  bool BuffDetection::detect_armor()
-  {
-    // armor roi 区域的图像为检测图像，center roi 区域为备用图像
-    cv::Mat detect = (m_image_armor & m_local_mask)(m_armor_roi);
-    cv::Mat backup = (m_image_armor & m_local_mask)(m_center_roi);
-    std::vector<LightLine> lightlines;
-    // 调换标志位，如果检测不到，则调换检测图像和备用图像，并将其置为 true
-    bool reverse = false;
-  RESTART:
-    // 寻找符合装甲板边框要求的灯条
-    if (find_armor_lightlines(detect, lightlines, m_global_roi, m_armor_roi) == false) {
-      // 如果找不到并且已经调换过图像了，则检测失败
-      if (reverse == true) {
-        return false;
-      }
-      // 如果找不到并且没有调换过，则调换图像并置标志位
-      std::swap(detect, backup);
-      std::swap(m_armor_roi, m_center_roi);
-      reverse = true;
-      // 回到检测装甲板灯条处
-      goto RESTART;
+    cv::Mat gray_img; // 转灰度图
+    cv::cvtColor(frame.m_image, gray_img, cv::COLOR_BGR2GRAY);
+
+    cv::Mat binary_img; // 二值化
+    cv::threshold(gray_img, binary_img, param_thresh, param_maxval, cv::THRESH_BINARY);
+
+    cv::Mat dilated_img; // 膨胀
+    cv::Mat kernel = cv::getStructuringElement(
+        cv::MORPH_RECT, cv::Size(param_kernel_width, param_kernel_height)); // 使用矩形核
+    cv::dilate(binary_img, dilated_img, kernel, cv::Point(-1, -1), 1);
+
+    m_image_arrow = dilated_img;
+    m_image_armor = dilated_img;
+
+    // 设置局部 roi
+    m_local_mask.setTo(0);
+
+    if (whether_use_debug_pre) {
+      cv::imshow("binary_img", m_image_show);
+      cv::imshow("m_image_arrow", m_image_arrow);
+      cv::imshow("m_image_armor", m_image_armor); // 调试用}
     }
-#if SHOW_IMAGE >= 2
-    for (const auto& lightline : lightlines) {
-      draw(lightline, Param::DRAW_COLOR, 1, m_armor_roi);
-    }
-#endif
-    // 根据灯条匹配装甲板
-    if (find_armor(m_armor, lightlines, m_arrow) == false) {
-      if (reverse == true) {
-        return false;
-      }
-      std::swap(detect, backup);
-      std::swap(m_armor_roi, m_center_roi);
-      reverse = true;
-      goto RESTART;
-    }
-#if SHOW_IMAGE >= 1
-    cv::circle(m_image_show, m_armor.m_center, m_armor.m_outside.m_length * 0.45,
-               cv::Scalar(225, 225, 225), 2);
-#endif
-    return true;
   };
 
-  /**
-   * @brief 根据提取的灯条匹配装甲板，成功返回 true，否则返回 false
-   * @param[in] frames        边框灯条
-   * @param[in] centers       中心灯条
-   * @param[in] armorPtr      装甲板
-   * @param[in] arrowPtr      箭头
-   * @return true
-   * @return false
-   */
-  bool BuffDetection::find_armor(Armor& armor, const std::vector<LightLine>& frames,
-                                 const Arrow& arrow)
-  {
-    std::vector<int> labels;
-    // 使用 sameArmor 函数匹配
-    cv::partition(frames, labels, is_same_armor);
-    for (size_t i = 0; i < labels.size() - 1; ++i) {
-      for (size_t j = i + 1; j < labels.size(); ++j) {
-        if (labels[i] == labels[j]) {
-          cv::Point2f center = 0.5 * (frames.at(i).m_center + frames.at(j).m_center);
-          // 此处判断装甲板中心与箭头中心的距离，如果不符则检测失败
-          if (tools::inRange(tools::p2p_distance(center, arrow.m_center), arrow.m_length * 0.8,
-                             arrow.m_length * 1.5)) {
-            armor.set(frames[i], frames[j]);
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  };
+  //========================Arrow========================
 
   /**
-   * @brief 判断两个灯条是否满足在一个装甲板内的条件，是则返回 true，否则为 false
+   * @brief 设置箭头
+   * @param[in] points        点集
+   * @param[in] roi
+   */
+  void Arrow::set(const std::vector<LightLine>& lightlines, const cv::Point2f& roi)
+  {
+    std::vector<cv::Point2f> arrowPoints;
+    double fillArea = 0.0;
+    double pointLineThresh = 0.0;
+    std::for_each(lightlines.begin(), lightlines.end(), [&](const LightLine& l) {
+      arrowPoints.insert(arrowPoints.end(), l.m_contour.begin(), l.m_contour.end());
+      fillArea += l.m_contour_area;
+      pointLineThresh += l.m_length / lightlines.size();
+    });
+    // 滤除距离较大的点
+    m_contour.clear();
+    cv::Vec4f line;
+    cv::fitLine(arrowPoints, line, cv::DIST_L2, 0, 0.01, 0.01);
+    for (const auto& point : arrowPoints) {
+      if (tools::pointLineDistance(point, line) < pointLineThresh) {
+        m_contour.push_back(point);
+      }
+    }
+    // 设置成员变量
+    m_rotated_rect = cv::minAreaRect(m_contour);
+    m_center = m_rotated_rect.center + roi;
+    m_length = m_rotated_rect.size.height;
+    m_width = m_rotated_rect.size.width;
+    // RotatedRect::angle 范围为 -90~0. 这里根据长宽长度关系，将角度扩展到 -90~90
+    if (m_length < m_width) {
+      m_angle = m_rotated_rect.angle;
+      // 长的为 length
+      std::swap(m_length, m_width);
+    } else {
+      m_angle = m_rotated_rect.angle + 90;
+    }
+    m_aspect_ratio = m_length / m_width;
+    m_area = m_length * m_width;
+    m_fill_ratio = fillArea / m_area;
+    return;
+  }
+
+  /**
+   * @brief 比较两个灯条是否满足在一个箭头内的条件，是则返回 true，否则为 false
    * @param[in] l1
    * @param[in] l2
    * @return true
    * @return false
    */
-  bool BuffDetection::is_same_armor(const LightLine& l1, const LightLine& l2)
+  bool BuffDetection::is_same_arrow(const LightLine& l1, const LightLine& l2)
   {
     // 判断面积比
-    double ratio{l1.m_contour_area / l2.m_contour_area};
-    if (tools::inRange(ratio, 1 / max_same_armor_area_ratio, max_same_armor_area_ratio) == false) {
+    double areaRatio{l1.m_area / l2.m_area};
+    if (tools::inRange(areaRatio, 1.0 / max_same_arrow_area_ratio, max_same_arrow_area_ratio) ==
+        false) {
       return false;
     }
     // 判断距离
-    double distance{tools::p2p_distance(l1.m_center, l2.m_center)};
-    if (distance < min_same_armor_distance || distance > max_same_armor_distance) {
-      return false;
-    }
-    // 判断角度
-    double angle = calAngleBetweenLightlines(l1, l2);
-    if (angle > 10 && angle < 170) {
+    double distance{tools::p2p_distance(l1.m_rotated_rect.center, l2.m_rotated_rect.center)};
+    double maxDistance{1.2 * (l1.m_width + l2.m_width)};
+    if (distance > maxDistance) {
       return false;
     }
     return true;
-  }
+  };
 
   /**
-   * @brief 计算两个灯条长边的夹角
-   * @param[in] l1
-   * @param[in] l2
-   * @return double
+   * @brief 寻找箭头，找到则返回 true，否则返回 false
+   * @return true
+   * @return false
    */
-  double BuffDetection::calAngleBetweenLightlines(const LightLine& l1, const LightLine& l2)
+  bool BuffDetection::check_arrow()
   {
-    // 长边对应方向向量
-    std::array<std::array<cv::Point2f, 4>, 2> pointsArray;
-    std::array<double, 2> lengths{l1.m_length, l2.m_length};
-    l1.m_rotated_rect.points(pointsArray.at(0).begin());
-    l2.m_rotated_rect.points(pointsArray.at(1).begin());
-    std::array<cv::Point2f, 2> vecs;
-    constexpr double eps = 1e-3;
-    // 遍历灯条的四个点，寻找长边对应的两个点
-    for (size_t i = 0; i < 2; ++i) {
-      for (size_t j = 0; j < 4; ++i) {
-        bool flag = false;
-        for (size_t k = j; k < 4; ++j) {
-          if (std::abs(tools::p2p_distance(pointsArray.at(i).at(j), pointsArray.at(i).at(k)) -
-                       lengths.at(i)) < eps) {
-            flag = true;
-            vecs.at(i) = pointsArray.at(i).at(j) - pointsArray.at(i).at(k);
-            break;
-          }
-        }
-        if (flag == true) {
-          break;
-        }
+    std::vector<LightLine> lightlines;
+    find_arrow_lightlines(m_image_arrow, lightlines, m_global_roi);
+
+    // 灯条匹配箭头
+    if (match_arrow(m_arrow, lightlines, m_global_roi) == false) {
+      return false;
+    }
+
+    if (whether_use_debug_arrow) {
+      for (const auto& lightline : lightlines) {
+        draw(lightline, GREEN);
+      }
+      draw(m_arrow.m_rotated_rect, WHITE, 2);
+    }
+
+    return true;
+  };
+
+  /**
+   * @brief 根据提取的灯条匹配箭头，成功返回 true，否则返回 false
+   * @param[in] lightlines    灯条向量
+   * @param[in] arrowPtr      指向箭头的指针
+   * @param[in] roi           roi，用来设置箭头的正确位置
+   * @return true
+   * @return false
+   */
+  bool BuffDetection::match_arrow(Arrow& arrow, const std::vector<LightLine>& lightlines,
+                                  const cv::Rect2f& roi)
+  {
+    // 利用 cv::partition 匹配箭头
+    std::vector<int> labels;
+    cv::partition(lightlines, labels, is_same_arrow);
+    // data 记录了标识号和其对应次数
+    std::vector<std::pair<int, int>> data;
+    for (auto label : labels) {
+      // 对每个 label，从已记录的数据中寻找是否有这个条目，有则对应计数项 +1，否则新增一个条目
+      auto iter = std::find_if(data.begin(), data.end(), [label](const std::pair<int, int>& unit) {
+        return unit.first == label;
+      });
+      if (iter == data.end()) {
+        data.emplace_back(label, 1);
+      } else {
+        iter->second += 1;
       }
     }
-    // 算向量之间夹角，取绝对值
-    double dotProduct = vecs.at(0).x * vecs.at(1).x + vecs.at(0).y * vecs.at(1).y;
-    double magnitude1 = std::sqrt(vecs.at(0).x * vecs.at(0).x + vecs.at(0).y * vecs.at(0).y);
-    double magnitude2 = std::sqrt(vecs.at(1).x * vecs.at(1).x + vecs.at(1).y * vecs.at(1).y);
-    double angle = tools::radian2Angle(std::acos(dotProduct / (magnitude1 * magnitude2)));
-    return angle;
-  }
+    if (data.empty() == true) {
+      return false;
+    }
+    // 寻找出现次数最多的 label 和其对应的 num
+    auto [maxLabel, maxNum]{*std::max_element(
+        data.begin(), data.end(), [](const std::pair<int, int>& i, const std::pair<int, int>& j) {
+          return i.second < j.second;
+        })};
+    // 判断 num 是否符合要求
+    if (tools::inRange(maxNum, min_arrow_lightline_num, max_arrow_lightline_num) == false) {
+      return false;
+    }
+    // 再次遍历 labels，选取和 maxLabel 相同的 label，并存入一个向量
+    std::vector<int> arrowIndices;
+    for (unsigned int i = 0; i < labels.size(); ++i) {
+      if (labels[i] == maxLabel) {
+        arrowIndices.push_back(i);
+      }
+    }
+    // 根据这个向量，将其对应的灯条轮廓点集中每个点存入箭头点的向量中
+    std::vector<LightLine> arrowLightlines;
+    for (auto index : arrowIndices) {
+      arrowLightlines.push_back(lightlines.at(index));
+    }
+    // 设置这个箭头
+    arrow.set(arrowLightlines, roi.tl());
+    // 判断长宽比
+    if (tools::inRange(arrow.m_aspect_ratio, min_arrow_aspect_ratio, max_arrow_aspect_ratio) ==
+        false) {
+      return false;
+    }
+    // 判断面积
+    if (arrow.m_area > max_arrow_area) {
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * @brief 寻找符合箭头要求的灯条轮廓并存入灯条容器
+   * @param[in] binary        二值图
+   * @param[in] lightlines    输出的灯条向量
+   * @param[in] roi           roi，用来设置灯条的正确位置
+   */
+  void BuffDetection::find_arrow_lightlines(const cv::Mat& binary,
+                                            std::vector<LightLine>& lightlines,
+                                            const cv::Rect2f& roi)
+  {
+    // 寻找轮廓
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(binary, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+    for (const auto& contour : contours) {
+      LightLine lightline(contour, roi);
+      // 判断面积
+      if (tools::inRange(lightline.m_area, min_arrow_lightline_area, max_arrow_lightline_area) ==
+          false) {
+        continue;
+      }
+      // 判断长宽比
+      if (lightline.m_aspect_ratio > max_arrow_lightline_aspect_ratio) {
+        continue;
+      }
+      // 符合要求，则存入
+      lightlines.emplace_back(std::move(lightline));
+    }
+  };
+
+  //========================Armor========================
 
   /**
    * @brief 设置装甲板参数
@@ -466,6 +445,192 @@ namespace auto_buff
   }
 
   /**
+   * @brief 根据提取的灯条匹配装甲板，成功返回 true，否则返回 false
+   * @param[in] frames        边框灯条
+   * @param[in] centers       中心灯条
+   * @param[in] armorPtr      装甲板
+   * @param[in] arrowPtr      箭头
+   * @return true
+   * @return false
+   */
+  bool BuffDetection::find_armor(Armor& armor, const std::vector<LightLine>& frames,
+                                 const Arrow& arrow)
+  {
+    std::vector<int> labels;
+    // 使用 sameArmor 函数匹配
+    cv::partition(frames, labels, is_same_armor);
+    for (size_t i = 0; i < labels.size() - 1; ++i) {
+      for (size_t j = i + 1; j < labels.size(); ++j) {
+        if (labels[i] == labels[j]) {
+          cv::Point2f center = 0.5 * (frames.at(i).m_center + frames.at(j).m_center);
+          // 此处判断装甲板中心与箭头中心的距离，如果不符则检测失败
+          if (tools::inRange(tools::p2p_distance(center, arrow.m_center), arrow.m_length * 0.8,
+                             arrow.m_length * 1.5)) {
+            armor.set(frames[i], frames[j]);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  /**
+   * @brief 装甲板四个角点需要根据其与中心的位置关系重新设置，以便于后面的 PnP
+   * 解算。之前的四个角点设置与 Lightline 构造函数的角点一致。
+   */
+  void BuffDetection::set_armor()
+  {
+    // 装甲板里外边框的重排序，之前根据面积确定边框，但可能不准确，现在根据到中心的距离确定
+    if (tools::p2p_distance(m_armor.m_inside.m_center, m_centerR.m_center_R) >
+        tools::p2p_distance(m_armor.m_outside.m_center, m_centerR.m_center_R)) {
+      std::swap(m_armor.m_inside, m_armor.m_outside);
+      std::swap(m_armor.m_tlIn, m_armor.m_tlOut);
+      std::swap(m_armor.m_trIn, m_armor.m_trOut);
+      std::swap(m_armor.m_blIn, m_armor.m_blOut);
+      std::swap(m_armor.m_brIn, m_armor.m_brOut);
+    }
+    /**
+     * 当中心 R
+     * 的纵坐标小于装甲板的纵坐标时，左上角和右下角、左下角和右上角的角点是相反的，需要交换这两对点。
+     * 但由于图像上存在误差，因此实际上设置中心 R
+     * 的纵坐标明显小于装甲板的纵坐标时才交换，其它情况下使用另一种判断方式，确保正确判断。
+     */
+    if (m_centerR.m_center_R.y < m_armor.m_center.y - armor_center_vertical_distance_threshold) {
+      std::swap(m_armor.m_tlIn, m_armor.m_brIn);
+      std::swap(m_armor.m_tlOut, m_armor.m_brOut);
+      std::swap(m_armor.m_trIn, m_armor.m_blIn);
+      std::swap(m_armor.m_trOut, m_armor.m_blOut);
+    }
+    /**
+     * 另一种判断方式根据装甲板的横坐标和中心的横坐标，以及装甲板左上角和左下角横坐标的位置关系得到。
+     * 在中心 R 的纵坐标明显大于装甲板中心时不需要交换，因此在纵坐标关系不明显时才进行判断。
+     * 在上面的约束下，如果装甲板横坐标大于中心，则装甲板明显在中心右侧，此时根据之前的角点设置，左上角点横坐标大于左下角点横坐标时，判断装甲板在中心上面，否则为下面。
+     * 装甲板横坐标小于中心时同理。
+     * 注：前一种判断方式在纵坐标差距不明显时会出现误差，而后一种在横坐标差距不明显时会出现误差。
+     * 因此将两者结合起来使用，即在纵坐标差距明显时使用前一种，纵坐标差距不明显时使用后一种，可以实现全场景下的覆盖。
+     */
+    else if (m_centerR.m_center_R.y <
+             m_armor.m_center.y + armor_center_vertical_distance_threshold) {
+      if (((m_centerR.m_center_R.x < m_armor.m_center.x &&
+            m_armor.m_inside.m_tl.x > m_armor.m_inside.m_bl.x) ||
+           (m_centerR.m_center_R.x > m_armor.m_center.x &&
+            m_armor.m_inside.m_tl.x < m_armor.m_inside.m_bl.x)) == false) {
+        std::swap(m_armor.m_tlIn, m_armor.m_brIn);
+        std::swap(m_armor.m_trIn, m_armor.m_blIn);
+      }
+      if (((m_centerR.m_center_R.x < m_armor.m_center.x &&
+            m_armor.m_outside.m_tl.x > m_armor.m_outside.m_bl.x) ||
+           (m_centerR.m_center_R.x > m_armor.m_center.x &&
+            m_armor.m_outside.m_tl.x < m_armor.m_outside.m_bl.x)) == false) {
+        std::swap(m_armor.m_tlOut, m_armor.m_brOut);
+        std::swap(m_armor.m_trOut, m_armor.m_blOut);
+      }
+    }
+#if CONSOLE_OUTPUT >= 2
+    MUTEX.lock();
+    std::cout << "feature camera points: ";
+    auto cameraPoints{getCameraPoints()};
+    std::for_each(cameraPoints.begin(), cameraPoints.end(),
+                  [](auto&& it) { std::cout << it << " "; });
+    std::cout << std::endl;
+    MUTEX.unlock();
+#endif
+  }
+
+  /**
+   * @brief 寻找装甲板，找到则返回 true，否则为 false
+   * @return true
+   * @return false
+   */
+  bool BuffDetection::detect_armor()
+  {
+    // armor roi 区域的图像为检测图像，center roi 区域为备用图像
+    cv::Mat detect = (m_image_armor & m_local_mask)(m_armor_roi);
+    cv::Mat backup = (m_image_armor & m_local_mask)(m_center_roi);
+    std::vector<LightLine> lightlines;
+    // 调换标志位，如果检测不到，则调换检测图像和备用图像，并将其置为 true
+    bool reverse = false;
+  RESTART:
+    // 寻找符合装甲板边框要求的灯条
+    if (find_armor_lightlines(detect, lightlines, m_global_roi, m_armor_roi) == false) {
+      // 如果找不到并且已经调换过图像了，则检测失败
+      if (reverse == true) {
+        return false;
+      }
+      // 如果找不到并且没有调换过，则调换图像并置标志位
+      std::swap(detect, backup);
+      std::swap(m_armor_roi, m_center_roi);
+      reverse = true;
+      // 回到检测装甲板灯条处
+      goto RESTART;
+    }
+#if SHOW_IMAGE >= 2
+    for (const auto& lightline : lightlines) {
+      draw(lightline, DRAW_COLOR, 1, m_armor_roi);
+    }
+#endif
+    // 根据灯条匹配装甲板
+    if (find_armor(m_armor, lightlines, m_arrow) == false) {
+      if (reverse == true) {
+        return false;
+      }
+      std::swap(detect, backup);
+      std::swap(m_armor_roi, m_center_roi);
+      reverse = true;
+      goto RESTART;
+    }
+#if SHOW_IMAGE >= 1
+    cv::circle(m_image_show, m_armor.m_center, m_armor.m_outside.m_length * 0.45,
+               cv::Scalar(225, 225, 225), 2);
+#endif
+    return true;
+  };
+
+  /**
+   * @brief 判断两个灯条是否满足在一个装甲板内的条件，是则返回 true，否则为 false
+   * @param[in] l1
+   * @param[in] l2
+   * @return true
+   * @return false
+   */
+  bool BuffDetection::is_same_armor(const LightLine& l1, const LightLine& l2)
+  {
+    // 判断面积比
+    double ratio{l1.m_contour_area / l2.m_contour_area};
+    if (tools::inRange(ratio, 1 / max_same_armor_area_ratio, max_same_armor_area_ratio) == false) {
+      return false;
+    }
+    // 判断距离
+    double distance{tools::p2p_distance(l1.m_center, l2.m_center)};
+    if (distance < min_same_armor_distance || distance > max_same_armor_distance) {
+      return false;
+    }
+    // 判断角度
+    double angle = calAngleBetweenLightlines(l1, l2);
+    if (angle > 10 && angle < 170) {
+      return false;
+    }
+    return true;
+  }
+
+  //========================CenterR========================
+
+  /**
+   * @brief 设置中心 R
+   * @param[in] lightline
+   */
+  void CenterR::set(const LightLine& lightline)
+  {
+    m_lightline = lightline;
+    m_bounding_rect = cv::boundingRect(lightline.m_contour);
+    // 由于灯条角点和中心点已经设置过 roi，因此这里不需要重新设置
+    m_center_R = lightline.m_center;
+    m_x = m_center_R.x, m_y = m_center_R.y;
+    return;
+  }
+
+  /**
    * @brief 根据中心灯条寻找并设置中心，成功返回 true，失败返回 false
    * @param[in] center        中心
    * @param[in] lightlines    中心灯条向量
@@ -523,97 +688,108 @@ namespace auto_buff
   }
 
   /**
-   * @brief 设置中心 R
-   * @param[in] lightline
-   */
-  void CenterR::set(const LightLine& lightline)
-  {
-    m_lightline = lightline;
-    m_bounding_rect = cv::boundingRect(lightline.m_contour);
-    // 由于灯条角点和中心点已经设置过 roi，因此这里不需要重新设置
-    m_center_R = lightline.m_center;
-    m_x = m_center_R.x, m_y = m_center_R.y;
-    return;
-  }
-
-  /**
-   @brief 图像预处理
-    */
-  void BuffDetection::preprocess_imgs(const Frame& frame)
-  {
-    tools::logger()->debug("-----preprocess_imgs-----");
-    if (frame.m_image.empty()) {
-      tools::logger()->error("[BuffDetection::preprocess_imgs] Error: Received an empty image!");
-      return;
-    }
-    cv::Mat gray_img; // 转灰度图
-    cv::cvtColor(frame.m_image, gray_img, cv::COLOR_BGR2GRAY);
-
-    cv::Mat binary_img; // 二值化
-    cv::threshold(gray_img, binary_img, param_thresh, param_maxval, cv::THRESH_BINARY);
-
-    cv::Mat dilated_img; // 膨胀
-    cv::Mat kernel = cv::getStructuringElement(
-        cv::MORPH_RECT, cv::Size(param_kernel_width, param_kernel_height)); // 使用矩形核
-    cv::dilate(binary_img, dilated_img, kernel, cv::Point(-1, -1), 1);
-
-    if (whether_use_debug) {
-      cv::imshow("binary_img", binary_img);
-      cv::imshow("gray_img", gray_img);
-      cv::imshow("Dilated Image", dilated_img); // 调试用}
-    }
-  };
-
-  /**
-   * @brief 寻找箭头，找到则返回 true，否则返回 false
+   * @brief 寻找中心 R ，找到则返回 true，否则返回 false
    * @return true
    * @return false
    */
-  bool BuffDetection::check_arrow()
+  bool BuffDetection::detect_centerR()
   {
+    m_image_center = (m_image_armor & m_local_mask)(m_center_roi);
+    // 寻找中心灯条，可能是多个
     std::vector<LightLine> lightlines;
-    find_arrow_lightlines(m_image_arrow, lightlines, m_global_roi);
-    // for (const auto& lightline : lightlines) {
-    //   draw(lightline, cv::Scalar {0, 255, 0};
-    // }
-
-    // 灯条匹配箭头
-    if (match_arrow(m_arrow, lightlines, m_global_roi) == false) {
+    if (findCenterLightlines(m_image_center, lightlines, m_global_roi, m_center_roi) == false) {
       return false;
     }
+#if SHOW_IMAGE >= 2
+    for (const auto& lightline : lightlines) {
+      draw(lightline, YELLOW, 1, m_center_roi);
+    }
+#endif
+    // 从灯条中寻找中心 R
+    if (find_centerR(m_centerR, lightlines, m_arrow, m_armor) == false) {
+      return false;
+    }
+#if SHOW_IMAGE >= 1
+    draw(m_centerR.m_bounding_rect, cv::Scalar(225, 225, 225), 2, m_center_roi);
+#endif
     return true;
-
-    // draw(m_arrow.m_rotatedRect, Param::WHITE, 2);
-  };
+  }
 
   /**
-   * @brief 寻找符合箭头要求的灯条轮廓并存入灯条容器
-   * @param[in] binary        二值图
-   * @param[in] lightlines    输出的灯条向量
-   * @param[in] roi           roi，用来设置灯条的正确位置
+   * @brief 寻找符合中心 R 要求的中心灯条，并将其存入一个向量中。成功返回 true，否则返回
+   * false。
+   * @param[in] image         带有中心区域的图片
+   * @param[in] lightlines    存储的灯条向量
+   * @param[in] globalRoi     全局 roi
+   * @param[in] localRoi      局部 roi
+   * @return true
+   * @return false
    */
-  void BuffDetection::find_arrow_lightlines(const cv::Mat& binary,
-                                            std::vector<LightLine>& lightlines,
-                                            const cv::Rect2f& roi)
+  bool BuffDetection::findCenterLightlines(const cv::Mat& image, std::vector<LightLine>& lightlines,
+                                           const cv::Rect2f& globalRoi, const cv::Rect2f& localRoi)
   {
     // 寻找轮廓
     std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(binary, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(image, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
     for (const auto& contour : contours) {
-      LightLine lightline(contour, roi);
+      LightLine lightline(contour, globalRoi, localRoi);
       // 判断面积
-      if (tools::inRange(lightline.m_area, min_arrow_lightline_area, max_arrow_lightline_area) ==
-          false) {
+      if (tools::inRange(lightline.m_area, min_center_area, max_center_area) == false) {
         continue;
       }
       // 判断长宽比
-      if (lightline.m_aspect_ratio > max_arrow_lightline_aspect_ratio) {
+      if (lightline.m_aspect_ratio > max_center_aspect_ratio) {
         continue;
       }
-      // 符合要求，则存入
+      // 如果全部符合，则存入向量中
       lightlines.emplace_back(std::move(lightline));
     }
-  };
+    // 符合要求灯条的数量为 0 则失败
+    if (lightlines.empty()) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * @brief 计算两个灯条长边的夹角
+   * @param[in] l1
+   * @param[in] l2
+   * @return double
+   */
+  double BuffDetection::calAngleBetweenLightlines(const LightLine& l1, const LightLine& l2)
+  {
+    // 长边对应方向向量
+    std::array<std::array<cv::Point2f, 4>, 2> pointsArray;
+    std::array<double, 2> lengths{l1.m_length, l2.m_length};
+    l1.m_rotated_rect.points(pointsArray.at(0).begin());
+    l2.m_rotated_rect.points(pointsArray.at(1).begin());
+    std::array<cv::Point2f, 2> vecs;
+    constexpr double eps = 1e-3;
+    // 遍历灯条的四个点，寻找长边对应的两个点
+    for (size_t i = 0; i < 2; ++i) {
+      for (size_t j = 0; j < 4; ++i) {
+        bool flag = false;
+        for (size_t k = j; k < 4; ++j) {
+          if (std::abs(tools::p2p_distance(pointsArray.at(i).at(j), pointsArray.at(i).at(k)) -
+                       lengths.at(i)) < eps) {
+            flag = true;
+            vecs.at(i) = pointsArray.at(i).at(j) - pointsArray.at(i).at(k);
+            break;
+          }
+        }
+        if (flag == true) {
+          break;
+        }
+      }
+    }
+    // 算向量之间夹角，取绝对值
+    double dotProduct = vecs.at(0).x * vecs.at(1).x + vecs.at(0).y * vecs.at(1).y;
+    double magnitude1 = std::sqrt(vecs.at(0).x * vecs.at(0).x + vecs.at(0).y * vecs.at(0).y);
+    double magnitude2 = std::sqrt(vecs.at(1).x * vecs.at(1).x + vecs.at(1).y * vecs.at(1).y);
+    double angle = tools::radian2Angle(std::acos(dotProduct / (magnitude1 * magnitude2)));
+    return angle;
+  }
 
   /**
    * @brief 设置全局
@@ -627,98 +803,9 @@ namespace auto_buff
         cv::Rect2f(m_centerR.m_x - 0.5 * width, m_centerR.m_y - 0.5 * width, width, width);
     tools::reset_roi(m_global_roi, image_height, image_width);
 #if SHOW_IMAGE >= 2
-    cv::rectangle(m_imageShow, m_globalRoi, Param::DRAW_COLOR);
+    cv::rectangle(m_image_show, m_global_roi, DRAW_COLOR);
 #endif
   }
-
-  /**
-   * @brief 根据提取的灯条匹配箭头，成功返回 true，否则返回 false
-   * @param[in] lightlines    灯条向量
-   * @param[in] arrowPtr      指向箭头的指针
-   * @param[in] roi           roi，用来设置箭头的正确位置
-   * @return true
-   * @return false
-   */
-  bool BuffDetection::match_arrow(Arrow& arrow, const std::vector<LightLine>& lightlines,
-                                  const cv::Rect2f& roi)
-  {
-    // 利用 cv::partition 匹配箭头
-    std::vector<int> labels;
-    cv::partition(lightlines, labels, is_same_arrow);
-    // data 记录了标识号和其对应次数
-    std::vector<std::pair<int, int>> data;
-    for (auto label : labels) {
-      // 对每个 label，从已记录的数据中寻找是否有这个条目，有则对应计数项 +1，否则新增一个条目
-      auto iter = std::find_if(data.begin(), data.end(), [label](const std::pair<int, int>& unit) {
-        return unit.first == label;
-      });
-      if (iter == data.end()) {
-        data.emplace_back(label, 1);
-      } else {
-        iter->second += 1;
-      }
-    }
-    if (data.empty() == true) {
-      return false;
-    }
-    // 寻找出现次数最多的 label 和其对应的 num
-    auto [maxLabel, maxNum]{*std::max_element(
-        data.begin(), data.end(), [](const std::pair<int, int>& i, const std::pair<int, int>& j) {
-          return i.second < j.second;
-        })};
-    // 判断 num 是否符合要求
-    if (tools::inRange(maxNum, min_arrow_lightline_num, max_arrow_lightline_num) == false) {
-      return false;
-    }
-    // 再次遍历 labels，选取和 maxLabel 相同的 label，并存入一个向量
-    std::vector<int> arrowIndices;
-    for (unsigned int i = 0; i < labels.size(); ++i) {
-      if (labels[i] == maxLabel) {
-        arrowIndices.push_back(i);
-      }
-    }
-    // 根据这个向量，将其对应的灯条轮廓点集中每个点存入箭头点的向量中
-    std::vector<LightLine> arrowLightlines;
-    for (auto index : arrowIndices) {
-      arrowLightlines.push_back(lightlines.at(index));
-    }
-    // 设置这个箭头
-    arrow.set(arrowLightlines, roi.tl());
-    // 判断长宽比
-    if (tools::inRange(arrow.m_aspect_ratio, min_arrow_aspect_ratio, max_arrow_aspect_ratio) ==
-        false) {
-      return false;
-    }
-    // 判断面积
-    if (arrow.m_area > max_arrow_area) {
-      return false;
-    }
-    return true;
-  };
-
-  /**
-   * @brief 比较两个灯条是否满足在一个箭头内的条件，是则返回 true，否则为 false
-   * @param[in] l1
-   * @param[in] l2
-   * @return true
-   * @return false
-   */
-  bool BuffDetection::is_same_arrow(const LightLine& l1, const LightLine& l2)
-  {
-    // 判断面积比
-    double areaRatio{l1.m_area / l2.m_area};
-    if (tools::inRange(areaRatio, 1.0 / max_same_arrow_area_ratio, max_same_arrow_area_ratio) ==
-        false) {
-      return false;
-    }
-    // 判断距离
-    double distance{tools::p2p_distance(l1.m_rotated_rect.center, l2.m_rotated_rect.center)};
-    double maxDistance{1.2 * (l1.m_width + l2.m_width)};
-    if (distance > maxDistance) {
-      return false;
-    }
-    return true;
-  };
 
   /**
    * @brief 设置局部 roi，局部 roi 包括中心 R 的 roi 和装甲板的 roi，根据箭头的两个端点进行提取。
@@ -841,66 +928,7 @@ namespace auto_buff
     m_x = m_center.x, m_y = m_center.y;
   };
 
-  /**
-   * @brief 设置箭头
-   * @param[in] points        点集
-   * @param[in] roi
-   */
-  void Arrow::set(const std::vector<LightLine>& lightlines, const cv::Point2f& roi)
-  {
-    std::vector<cv::Point2f> arrowPoints;
-    double fillArea = 0.0;
-    double pointLineThresh = 0.0;
-    std::for_each(lightlines.begin(), lightlines.end(), [&](const LightLine& l) {
-      arrowPoints.insert(arrowPoints.end(), l.m_contour.begin(), l.m_contour.end());
-      fillArea += l.m_contour_area;
-      pointLineThresh += l.m_length / lightlines.size();
-    });
-    // 滤除距离较大的点
-    m_contour.clear();
-    cv::Vec4f line;
-    cv::fitLine(arrowPoints, line, cv::DIST_L2, 0, 0.01, 0.01);
-    for (const auto& point : arrowPoints) {
-      if (tools::pointLineDistance(point, line) < pointLineThresh) {
-        m_contour.push_back(point);
-      }
-    }
-    // 设置成员变量
-    m_rotated_rect = cv::minAreaRect(m_contour);
-    m_center = m_rotated_rect.center + roi;
-    m_length = m_rotated_rect.size.height;
-    m_width = m_rotated_rect.size.width;
-    // RotatedRect::angle 范围为 -90~0. 这里根据长宽长度关系，将角度扩展到 -90~90
-    if (m_length < m_width) {
-      m_angle = m_rotated_rect.angle;
-      // 长的为 length
-      std::swap(m_length, m_width);
-    } else {
-      m_angle = m_rotated_rect.angle + 90;
-    }
-    m_aspect_ratio = m_length / m_width;
-    m_area = m_length * m_width;
-    m_fill_ratio = fillArea / m_area;
-    return;
-  }
-
-  // 提供一种方式在对象创建后重新设置其内容，避免频繁构造新对象（可能用于性能优化或复用对象）
-  void Frame::set(const cv::Mat& image, const std::chrono::steady_clock::time_point& time,
-                  double pitch, double yaw, double roll)
-  {
-    m_image = image;
-    m_time = time;
-    m_roll = roll;
-    m_pitch = pitch;
-    m_yaw = yaw;
-  }
-
-  void Frame::set(const cv::Mat& image, const std::chrono::steady_clock::time_point& time)
-  {
-    m_image = image;
-    m_time = time;
-  }
-
+  //========================绘图函数===========================
   /**
    * @brief 绘制灯条
    * @param[in] lightline     灯条
@@ -977,5 +1005,18 @@ namespace auto_buff
       cv::line(m_image_show, points[i] + localRoi.tl() + m_global_roi.tl(),
                points[(i + 1) % size] + localRoi.tl() + m_global_roi.tl(), color, thickness);
     }
+  }
+
+  /**
+   * @brief
+   * 设置装甲板角点，注意大小为4，顺序必须为内部灯条左上角点、内部灯条右上角点、外部灯条左下角点、外部灯条右下角点
+   * @param[in] points        输入的角点向量
+   */
+  void Armor::setCornerPoints(const std::vector<cv::Point2f>& points)
+  {
+    m_tlIn = points.at(0);
+    m_trIn = points.at(1);
+    m_blOut = points.at(2);
+    m_brOut = points.at(3);
   }
 } // namespace auto_buff

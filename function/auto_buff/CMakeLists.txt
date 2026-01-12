@@ -6,6 +6,8 @@ find_package(Ceres REQUIRED)
 
 add_library(auto_buff OBJECT
     rune_detector.cpp
+    rune_solver.cpp
+    power_rune.cpp
 )
 
 target_link_libraries(auto_buff openvino::runtime ${CERES_LIBRARIES} yaml-cpp)
