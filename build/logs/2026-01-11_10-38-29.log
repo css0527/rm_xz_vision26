@@ -1,5 +1,0 @@
-[2026-01-11 10:38:29.452] [info] HikRobot's daemon thread started.
-[2026-01-11 10:38:29.496] [warning] MV_CC_OpenDevice failed: 0x80000203
-[2026-01-11 10:38:29.596] [warning] MV_CC_StopGrabbing failed: 0x80000003
-[2026-01-11 10:38:30.599] [info] Reset usb successfully :)
-[2026-01-11 10:38:30.777] [info] HikRobot's capture thread started.

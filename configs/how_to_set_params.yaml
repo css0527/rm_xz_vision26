@@ -10,6 +10,17 @@ max_side_ratio: 1.5
 max_rectangular_error: 25
 min_confidence: 0.65
 
+# threshold: 150
+# max_angle_error: 45 # degree
+# min_lightbar_ratio: 1.5
+# max_lightbar_ratio: 20
+# min_lightbar_length: 8
+# min_armor_ratio: 1
+# max_armor_ratio: 5
+# max_side_ratio: 1.5
+# max_rectangular_error: 25 # degree
+# min_confidence: 0.8
+
 #####--------串口--------#####
 serial_port: "/dev/ttyCH341USB0"
 baudrate: 152000
@@ -19,6 +30,6 @@ classify_model: "/home/c/rm_xz_vision26/assets/tiny_resnet.onnx"
 
 #####--------相机曝光--------#####
 camera_name: "hikrobot"
-exposure_ms: 3
-gain: 18
+exposure_ms: 6
+gain: 20
 vid_pid: "2bdf:0001"
