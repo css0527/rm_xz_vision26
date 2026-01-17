@@ -1,3 +1,0 @@
-[2026-01-11 13:56:25.029] [info] HikRobot's daemon thread started.
-[2026-01-11 13:56:26.236] [warning] MV_CC_SetFloatValue("Gain", 18) failed: 0x80000102
-[2026-01-11 13:56:26.252] [info] HikRobot's capture thread started.

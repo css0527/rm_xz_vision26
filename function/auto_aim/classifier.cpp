@@ -111,4 +111,4 @@ namespace xz_vision
     armor.name = static_cast<ArmorName>(label_id);
   }
 
-} // namespace auto_aim
+} // namespace xz_vision

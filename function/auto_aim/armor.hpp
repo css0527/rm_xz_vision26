@@ -38,7 +38,7 @@ namespace xz_vision
     // 装甲板名
     enum ArmorName
     {
-        one,
+        one ,
         two,
         three,
         four,

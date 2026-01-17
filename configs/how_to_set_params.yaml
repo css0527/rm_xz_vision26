@@ -1,35 +1,34 @@
 #####--------传统视觉调参--------#####
-threshold: 125
-max_angle_error: 55
-min_lightbar_ratio: 1.2
-max_lightbar_ratio: 25
-min_lightbar_length: 6
-min_armor_ratio: 0.9
-max_armor_ratio: 6.5
-max_side_ratio: 1.5
-max_rectangular_error: 25
-min_confidence: 0.65
-
-# threshold: 150
-# max_angle_error: 45 # degree
-# min_lightbar_ratio: 1.5
-# max_lightbar_ratio: 20
-# min_lightbar_length: 8
-# min_armor_ratio: 1
-# max_armor_ratio: 5
+# threshold: 125
+# max_angle_error: 55
+# min_lightbar_ratio: 1.2
+# max_lightbar_ratio: 25
+# min_lightbar_length: 6
+# min_armor_ratio: 0.9
+# max_armor_ratio: 6.5
 # max_side_ratio: 1.5
-# max_rectangular_error: 25 # degree
+# max_rectangular_error: 25
 # min_confidence: 0.8
+
+threshold: 150
+max_angle_error: 45 # degree
+min_lightbar_ratio: 1.5
+max_lightbar_ratio: 20
+min_lightbar_length: 8
+min_armor_ratio: 1
+max_armor_ratio: 5
+max_side_ratio: 1.5
+max_rectangular_error: 25 # degree
+min_confidence: 0.8
 
 #####--------串口--------#####
 serial_port: "/dev/ttyCH341USB0"
 baudrate: 152000
 
 #####--------分类器参数--------#####
-classify_model: "/home/c/rm_xz_vision26/assets/tiny_resnet.onnx"
-
+classify_model: /home/chaichai/project/rm_xz_vision26/assets/tiny_resnet.onnx
 #####--------相机曝光--------#####
 camera_name: "hikrobot"
-exposure_ms: 6
+exposure_ms: 5
 gain: 20
 vid_pid: "2bdf:0001"

@@ -9,8 +9,9 @@
 
 #include "armor.hpp"
 #include "classifier.hpp"
-#include "/home/c/rm_xz_vision26/tools/img_tools.hpp"
-#include "/home/c/rm_xz_vision26/tools/logger.hpp"
+#include "./tools/draw_tool.hpp"
+#include "./tools/logger.hpp"
+
 namespace xz_vision
 {
   // 装甲板检测类
@@ -20,7 +21,7 @@ namespace xz_vision
     Detector(const std::string& config_path, bool debug = true);
 
     std::list<Armor> detect(const cv::Mat& bgr_img, int frame_count = -1);
-    bool detect(Armor & armor, const cv::Mat & bgr_img);
+    bool detect(Armor& armor, const cv::Mat& bgr_img);
 
   private:
     Classifier classifier_;
