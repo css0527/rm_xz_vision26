@@ -351,33 +351,97 @@ namespace xz_vision
     cv::imwrite(img_path, armor.pattern);
   }
 
+  // void Detector::show_result(const cv::Mat& binary_img, const cv::Mat& bgr_img,
+  //                            const std::list<Lightbar>& lightbars, const std::list<Armor>& armors,
+  //                            int frame_count) const
+  // {
+  //   auto detection = bgr_img.clone();
+  //   tools::draw_text(detection, fmt::format("[{}]", frame_count), {10, 30}, {255, 255, 255});
+
+  //   for (const auto& lightbar : lightbars) {
+  //     auto info = fmt::format("{:.1f} {:.1f} {:.1f} {}", lightbar.angle_error * 57.3,
+  //                             lightbar.ratio, lightbar.length, COLOR[lightbar.color]);
+  //     tools::draw_text(detection, info, lightbar.top, {0, 255, 255});
+  //     tools::draw_points(detection, lightbar.points, {0, 255, 255}, 3);
+  //   }
+
+  //   for (const auto& armor : armors) {
+  //     auto info = fmt::format("{:.2f} {:.2f} {:.1f} {:.2f} {} {}", armor.ratio, armor.side_ratio,
+  //                             armor.rectangular_error * 57.3, armor.confidence,
+  //                             ARMOR_NAME[armor.name], ARMOR_TYPE[armor.type]);
+  //     tools::draw_points(detection, armor.points, {0, 255, 0});
+  //     tools::draw_text(detection, info, armor.left.bottom, {0, 255, 0});
+  //   }
+
+  //   cv::Mat binary_img2;
+  //   cv::resize(binary_img, binary_img2, {}, 0.5, 0.5); // 显示时缩小图片尺寸
+  //   cv::resize(detection, detection, {}, 0.5, 0.5);    // 显示时缩小图片尺寸
+
+  //    cv::imshow("threshold", binary_img2);
+  //   cv::imshow("detection", detection);
+  // }
+
   void Detector::show_result(const cv::Mat& binary_img, const cv::Mat& bgr_img,
-                             const std::list<Lightbar>& lightbars, const std::list<Armor>& armors,
-                             int frame_count) const
-  {
+                           const std::list<Lightbar>& lightbars, const std::list<Armor>& armors,
+                           int frame_count) const
+{
     auto detection = bgr_img.clone();
     tools::draw_text(detection, fmt::format("[{}]", frame_count), {10, 30}, {255, 255, 255});
 
-    for (const auto& lightbar : lightbars) {
-      auto info = fmt::format("{:.1f} {:.1f} {:.1f} {}", lightbar.angle_error * 57.3,
-                              lightbar.ratio, lightbar.length, COLOR[lightbar.color]);
-      tools::draw_text(detection, info, lightbar.top, {0, 255, 255});
-      tools::draw_points(detection, lightbar.points, {0, 255, 255}, 3);
-    }
+    // 绘制灯条
+    for (const auto& lightbar : lightbars) 
+    {
+        // auto info = fmt::format("{:.1f} {:.1f} {:.1f} {}", lightbar.angle_error * 57.3,
+        //                         lightbar.ratio, lightbar.length, COLOR[lightbar.color]);
+        //tools::draw_text(detection, info, lightbar.top, {0, 255, 255});
+        
+        // if (lightbar.ratio > 1.1 && lightbar.ratio < 20.0 &&
+        //     lightbar.width > 0.3 && lightbar.length > 2.0 && lightbar.length < 150)
+        // {
+        //     if ((lightbar.angle <= 180 && lightbar.angle >= 150) || 
+        //         (lightbar.angle <= 30 && lightbar.angle >= 0))
+        //     {
+        //         tools::draw_points(detection, lightbar.points, {0, 255, 255}, 3);
+        //     }
+        // }
 
+        // 改为：允许更大角度范围的灯条显示
+        if (lightbar.ratio > 1.1 && lightbar.ratio < 20.0 &&
+            lightbar.width > 0.3 && lightbar.length > 2.0 && lightbar.length < 150)
+        {
+            // 放宽角度限制：允许60°到120°的垂直灯条
+            if ((lightbar.angle <= 180 && lightbar.angle >= 120) || 
+                (lightbar.angle <= 60 && lightbar.angle >= 0))
+            {
+                tools::draw_points(detection, lightbar.points, {0, 255, 255}, 3);
+            }
+        }
+        else
+        {
+            continue;
+        }
+    }
+    
+    // 绘制装甲板
     for (const auto& armor : armors) {
-      auto info = fmt::format("{:.2f} {:.2f} {:.1f} {:.2f} {} {}", armor.ratio, armor.side_ratio,
-                              armor.rectangular_error * 57.3, armor.confidence,
+        // auto info = fmt::format("{:.2f} {:.2f} {:.1f} {:.2f} {} {}", armor.ratio, armor.side_ratio,
+        //                         armor.rectangular_error * 57.3, armor.confidence,
+        //                         ARMOR_NAME[armor.name], ARMOR_TYPE[armor.type]);
+        
+        // 修改这里：从装甲板的左灯条获取颜色
+        auto info = fmt::format("{} {:.2f} {} {}", COLOR[armor.left.color], armor.confidence,
                               ARMOR_NAME[armor.name], ARMOR_TYPE[armor.type]);
-      tools::draw_points(detection, armor.points, {0, 255, 0});
-      tools::draw_text(detection, info, armor.left.bottom, {0, 255, 0});
+        
+        tools::draw_points(detection, armor.points, {0, 255, 0});
+        tools::draw_text(detection, info, armor.left.bottom, {0, 255, 0});
     }
 
     cv::Mat binary_img2;
     cv::resize(binary_img, binary_img2, {}, 0.5, 0.5); // 显示时缩小图片尺寸
     cv::resize(detection, detection, {}, 0.5, 0.5);    // 显示时缩小图片尺寸
 
-     cv::imshow("threshold", binary_img2);
+    cv::imshow("threshold", binary_img2);
     cv::imshow("detection", detection);
-  }
+}
+
 } // namespace xz_vision

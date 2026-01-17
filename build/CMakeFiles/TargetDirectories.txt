@@ -1,6 +1,6 @@
-<<<<<<< HEAD
 /home/c/rm_xz_vision26/build/CMakeFiles/auto_buff_test.dir
-/home/c/rm_xz_vision26/build/CMakeFiles/test1.dir
+/home/c/rm_xz_vision26/build/CMakeFiles/auto_buff_main.dir
+/home/c/rm_xz_vision26/build/CMakeFiles/trad_cv_test.dir
 /home/c/rm_xz_vision26/build/CMakeFiles/exit_test.dir
 /home/c/rm_xz_vision26/build/CMakeFiles/edit_cache.dir
 /home/c/rm_xz_vision26/build/CMakeFiles/rebuild_cache.dir
@@ -16,15 +16,3 @@
 /home/c/rm_xz_vision26/build/tools/CMakeFiles/tools.dir
 /home/c/rm_xz_vision26/build/tools/CMakeFiles/edit_cache.dir
 /home/c/rm_xz_vision26/build/tools/CMakeFiles/rebuild_cache.dir
-=======
-/home/chaichai/project/rm_xz_vision26/build/CMakeFiles/auto_buff_test.dir
-/home/chaichai/project/rm_xz_vision26/build/CMakeFiles/auto_buff_main.dir
-/home/chaichai/project/rm_xz_vision26/build/CMakeFiles/edit_cache.dir
-/home/chaichai/project/rm_xz_vision26/build/CMakeFiles/rebuild_cache.dir
-/home/chaichai/project/rm_xz_vision26/build/function/auto_buff/CMakeFiles/auto_buff.dir
-/home/chaichai/project/rm_xz_vision26/build/function/auto_buff/CMakeFiles/edit_cache.dir
-/home/chaichai/project/rm_xz_vision26/build/function/auto_buff/CMakeFiles/rebuild_cache.dir
-/home/chaichai/project/rm_xz_vision26/build/tools/CMakeFiles/tools.dir
-/home/chaichai/project/rm_xz_vision26/build/tools/CMakeFiles/edit_cache.dir
-/home/chaichai/project/rm_xz_vision26/build/tools/CMakeFiles/rebuild_cache.dir
->>>>>>> 3098ea9d5259c57699113a6e30d5bb834d87ab9a

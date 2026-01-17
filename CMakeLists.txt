@@ -49,14 +49,13 @@ add_subdirectory(tools)
 # #################tests##################
 add_executable(auto_buff_test test/auto_buff_test.cpp)
 add_executable(auto_buff_main test/auto_buff_main.cpp)
-add_executable(test1 test/test1.cpp)
+add_executable(trad_cv_test test/trad_cv_test.cpp)
 add_executable(exit_test test/exit_test.cpp)
 
 
 target_link_libraries(auto_buff_test ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
 target_link_libraries(auto_buff_main ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
-target_link_libraries(auto_buff_test PRIVATE
-    ${OpenCV_LIBS}
+target_link_libraries(auto_buff_test ${OpenCV_LIBS}
     auto_buff
     tools
     ecu
@@ -69,7 +68,7 @@ target_link_libraries(auto_buff_test PRIVATE
     ${LIBUSB_LIB}      # 添加libusb库
 )
 
-target_link_libraries(test1 PRIVATE
+target_link_libraries(trad_cv_test PRIVATE
     ${OpenCV_LIBS}
     auto_buff
     tools
