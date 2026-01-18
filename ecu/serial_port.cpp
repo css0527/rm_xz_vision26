@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
 
-#include "/home/c/rm_xz_vision26/tools/logger.hpp"
-#include "/home/c/rm_xz_vision26/tools/math_tool.hpp"
-#include "/home/c/rm_xz_vision26/tools/yaml.hpp"
+#include "tools/logger.hpp"
+#include "tools/math_tool.hpp"
+#include "tools/yaml.hpp"
 
 namespace ecu
 {

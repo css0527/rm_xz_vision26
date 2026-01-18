@@ -32,7 +32,7 @@ namespace xz_vision
     // 进行二值化
     cv::Mat binary_img;
     cv::threshold(gray_img, binary_img, threshold_, 255, cv::THRESH_BINARY);
-    //cv::imshow("binary_img", binary_img);
+    // cv::imshow("binary_img", binary_img);
 
     // 获取轮廓点
     std::vector<std::vector<cv::Point>> contours;
@@ -117,116 +117,117 @@ namespace xz_vision
     return armors;
   }
 
-  bool Detector::detect(Armor & armor, const cv::Mat & bgr_img)
-{
-  // 取得四个角点
-  auto tl = armor.points[0];
-  auto tr = armor.points[1];
-  auto br = armor.points[2];
-  auto bl = armor.points[3];
-  // 计算向量和调整后的点
-  auto lt2b = bl - tl;
-  auto rt2b = br - tr;
-  auto tl1 = (tl + bl) / 2 - lt2b;
-  auto bl1 = (tl + bl) / 2 + lt2b;
-  auto br1 = (tr + br) / 2 + rt2b;
-  auto tr1 = (tr + br) / 2 - rt2b;
-  auto tl2tr = tr1 - tl1;
-  auto bl2br = br1 - bl1;
-  auto tl2 = (tl1 + tr) / 2 - 0.75 * tl2tr;
-  auto tr2 = (tl1 + tr) / 2 + 0.75 * tl2tr;
-  auto bl2 = (bl1 + br) / 2 - 0.75 * bl2br;
-  auto br2 = (bl1 + br) / 2 + 0.75 * bl2br;
-  // 构造新的四个角点
-  std::vector<cv::Point> points = {tl2, tr2, br2, bl2};
-  auto armor_rotaterect = cv::minAreaRect(points);
-  cv::Rect boundingBox = armor_rotaterect.boundingRect();
-  // 检查boundingBox是否超出图像边界
-  if (
-    boundingBox.x < 0 || boundingBox.y < 0 || boundingBox.x + boundingBox.width > bgr_img.cols ||
-    boundingBox.y + boundingBox.height > bgr_img.rows) {
+  bool Detector::detect(Armor& armor, const cv::Mat& bgr_img)
+  {
+    // 取得四个角点
+    auto tl = armor.points[0];
+    auto tr = armor.points[1];
+    auto br = armor.points[2];
+    auto bl = armor.points[3];
+    // 计算向量和调整后的点
+    auto lt2b = bl - tl;
+    auto rt2b = br - tr;
+    auto tl1 = (tl + bl) / 2 - lt2b;
+    auto bl1 = (tl + bl) / 2 + lt2b;
+    auto br1 = (tr + br) / 2 + rt2b;
+    auto tr1 = (tr + br) / 2 - rt2b;
+    auto tl2tr = tr1 - tl1;
+    auto bl2br = br1 - bl1;
+    auto tl2 = (tl1 + tr) / 2 - 0.75 * tl2tr;
+    auto tr2 = (tl1 + tr) / 2 + 0.75 * tl2tr;
+    auto bl2 = (bl1 + br) / 2 - 0.75 * bl2br;
+    auto br2 = (bl1 + br) / 2 + 0.75 * bl2br;
+    // 构造新的四个角点
+    std::vector<cv::Point> points = {tl2, tr2, br2, bl2};
+    auto armor_rotaterect = cv::minAreaRect(points);
+    cv::Rect boundingBox = armor_rotaterect.boundingRect();
+    // 检查boundingBox是否超出图像边界
+    if (boundingBox.x < 0 || boundingBox.y < 0 ||
+        boundingBox.x + boundingBox.width > bgr_img.cols ||
+        boundingBox.y + boundingBox.height > bgr_img.rows) {
+      return false;
+    }
+
+    // 在图像上裁剪出这个矩形区域（ROI）
+    cv::Mat armor_roi = bgr_img(boundingBox);
+    if (armor_roi.empty()) {
+      return false;
+    }
+
+    // 彩色图转灰度图
+    cv::Mat gray_img;
+    cv::cvtColor(armor_roi, gray_img, cv::COLOR_BGR2GRAY);
+    // 进行二值化
+    cv::Mat binary_img;
+    cv::threshold(gray_img, binary_img, threshold_, 255, cv::THRESH_BINARY);
+    // cv::imshow("binary_img", binary_img);
+    // 获取轮廓点
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(binary_img, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+    // 获取灯条
+    std::size_t lightbar_id = 0;
+    std::list<Lightbar> lightbars;
+    for (const auto& contour : contours) {
+      auto rotated_rect = cv::minAreaRect(contour);
+      auto lightbar = Lightbar(rotated_rect, lightbar_id);
+
+      if (!check_geometry(lightbar))
+        continue;
+
+      lightbar.color = get_color(bgr_img, contour);
+      // lightbar_points_corrector(lightbar, gray_img); //关闭PCA
+      lightbars.emplace_back(lightbar);
+      lightbar_id += 1;
+    }
+
+    if (lightbars.size() < 2)
+      return false;
+
+    // 将灯条从左到右排序
+    lightbars.sort([](const Lightbar& a, const Lightbar& b) { return a.center.x < b.center.x; });
+
+    // 计算与 tl_roi, bl_roi 和 br_roi, tr_roi 距离最近的灯条
+    Lightbar* closest_left_lightbar = nullptr;
+    Lightbar* closest_right_lightbar = nullptr;
+    float min_distance_tl_bl = std::numeric_limits<float>::max();
+    float min_distance_br_tr = std::numeric_limits<float>::max();
+    for (auto& lightbar : lightbars) {
+      float distance_tl_bl =
+          cv::norm(tl - (lightbar.top + cv::Point2f(boundingBox.x, boundingBox.y))) +
+          cv::norm(bl - (lightbar.bottom + cv::Point2f(boundingBox.x, boundingBox.y)));
+      if (distance_tl_bl < min_distance_tl_bl) {
+        min_distance_tl_bl = distance_tl_bl;
+        closest_left_lightbar = &lightbar;
+      }
+      float distance_br_tr =
+          cv::norm(br - (lightbar.bottom + cv::Point2f(boundingBox.x, boundingBox.y))) +
+          cv::norm(tr - (lightbar.top + cv::Point2f(boundingBox.x, boundingBox.y)));
+      if (distance_br_tr < min_distance_br_tr) {
+        min_distance_br_tr = distance_br_tr;
+        closest_right_lightbar = &lightbar;
+      }
+    }
+
+    // tools::logger()->debug(
+    // "min_distance_br_tr + min_distance_tl_bl is {}", min_distance_br_tr + min_distance_tl_bl);
+    // std::vector<cv::Point2f> points2f{
+    //   closest_left_lightbar->top, closest_left_lightbar->bottom, closest_right_lightbar->bottom,
+    //   closest_right_lightbar->top};
+    // tools::draw_points(armor_roi, points2f, {0, 0, 255}, 2);
+    // cv::imshow("armor_roi", armor_roi);
+
+    if (closest_left_lightbar && closest_right_lightbar &&
+        min_distance_br_tr + min_distance_tl_bl < 15) {
+      // 将四个点从armor_roi坐标系转换到原始图像坐标系
+      armor.points[0] = closest_left_lightbar->top + cv::Point2f(boundingBox.x, boundingBox.y);
+      armor.points[1] = closest_right_lightbar->top + cv::Point2f(boundingBox.x, boundingBox.y);
+      armor.points[2] = closest_right_lightbar->bottom + cv::Point2f(boundingBox.x, boundingBox.y);
+      armor.points[3] = closest_left_lightbar->bottom + cv::Point2f(boundingBox.x, boundingBox.y);
+      return true;
+    }
+
     return false;
   }
-
-  // 在图像上裁剪出这个矩形区域（ROI）
-  cv::Mat armor_roi = bgr_img(boundingBox);
-  if (armor_roi.empty()) {
-    return false;
-  }
-
-  // 彩色图转灰度图
-  cv::Mat gray_img;
-  cv::cvtColor(armor_roi, gray_img, cv::COLOR_BGR2GRAY);
-  // 进行二值化
-  cv::Mat binary_img;
-  cv::threshold(gray_img, binary_img, threshold_, 255, cv::THRESH_BINARY);
-  // cv::imshow("binary_img", binary_img);
-  // 获取轮廓点
-  std::vector<std::vector<cv::Point>> contours;
-  cv::findContours(binary_img, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-  // 获取灯条
-  std::size_t lightbar_id = 0;
-  std::list<Lightbar> lightbars;
-  for (const auto & contour : contours) {
-    auto rotated_rect = cv::minAreaRect(contour);
-    auto lightbar = Lightbar(rotated_rect, lightbar_id);
-
-    if (!check_geometry(lightbar)) continue;
-
-    lightbar.color = get_color(bgr_img, contour);
-    // lightbar_points_corrector(lightbar, gray_img); //关闭PCA
-    lightbars.emplace_back(lightbar);
-    lightbar_id += 1;
-  }
-
-  if (lightbars.size() < 2) return false;
-
-  // 将灯条从左到右排序
-  lightbars.sort([](const Lightbar & a, const Lightbar & b) { return a.center.x < b.center.x; });
-
-  // 计算与 tl_roi, bl_roi 和 br_roi, tr_roi 距离最近的灯条
-  Lightbar * closest_left_lightbar = nullptr;
-  Lightbar * closest_right_lightbar = nullptr;
-  float min_distance_tl_bl = std::numeric_limits<float>::max();
-  float min_distance_br_tr = std::numeric_limits<float>::max();
-  for (auto & lightbar : lightbars) {
-    float distance_tl_bl =
-      cv::norm(tl - (lightbar.top + cv::Point2f(boundingBox.x, boundingBox.y))) +
-      cv::norm(bl - (lightbar.bottom + cv::Point2f(boundingBox.x, boundingBox.y)));
-    if (distance_tl_bl < min_distance_tl_bl) {
-      min_distance_tl_bl = distance_tl_bl;
-      closest_left_lightbar = &lightbar;
-    }
-    float distance_br_tr =
-      cv::norm(br - (lightbar.bottom + cv::Point2f(boundingBox.x, boundingBox.y))) +
-      cv::norm(tr - (lightbar.top + cv::Point2f(boundingBox.x, boundingBox.y)));
-    if (distance_br_tr < min_distance_br_tr) {
-      min_distance_br_tr = distance_br_tr;
-      closest_right_lightbar = &lightbar;
-    }
-  }
-
-  // tools::logger()->debug(
-  // "min_distance_br_tr + min_distance_tl_bl is {}", min_distance_br_tr + min_distance_tl_bl);
-  // std::vector<cv::Point2f> points2f{
-  //   closest_left_lightbar->top, closest_left_lightbar->bottom, closest_right_lightbar->bottom,
-  //   closest_right_lightbar->top};
-  // tools::draw_points(armor_roi, points2f, {0, 0, 255}, 2);
-  // cv::imshow("armor_roi", armor_roi);
-
-  if (
-    closest_left_lightbar && closest_right_lightbar &&
-    min_distance_br_tr + min_distance_tl_bl < 15) {
-    // 将四个点从armor_roi坐标系转换到原始图像坐标系
-    armor.points[0] = closest_left_lightbar->top + cv::Point2f(boundingBox.x, boundingBox.y);
-    armor.points[1] = closest_right_lightbar->top + cv::Point2f(boundingBox.x, boundingBox.y);
-    armor.points[2] = closest_right_lightbar->bottom + cv::Point2f(boundingBox.x, boundingBox.y);
-    armor.points[3] = closest_left_lightbar->bottom + cv::Point2f(boundingBox.x, boundingBox.y);
-    return true;
-  }
-
-  return false;
-}
 
   bool Detector::check_geometry(const Lightbar& lightbar) const
   {
@@ -347,7 +348,7 @@ namespace xz_vision
   void Detector::save(const Armor& armor) const
   {
     auto file_name = fmt::format("{:%Y-%m-%d_%H-%M-%S}", std::chrono::system_clock::now());
-    auto img_path = fmt::format("{}/{}_{}.jpg", save_path_, armor.name, file_name);
+    auto img_path = fmt::format("{}/{}_{}.jpg", save_path_, ARMOR_NAME[armor.name], file_name);
     cv::imwrite(img_path, armor.pattern);
   }
 

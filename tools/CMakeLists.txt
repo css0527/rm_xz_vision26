@@ -4,6 +4,6 @@ add_library(tools OBJECT
     exiter.cpp
     logger.cpp
     imgs_tool.cpp
-    img_tools.cpp
+    draw_tool.cpp
     plotter.cpp
 )
